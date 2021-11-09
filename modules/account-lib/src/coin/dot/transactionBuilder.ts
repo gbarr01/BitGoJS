@@ -3,7 +3,7 @@ import { BaseTransactionBuilder, TransactionType } from '../baseCoin';
 import { InvalidTransactionError, BuildTransactionError } from '../baseCoin/errors';
 import { BaseAddress, BaseKey } from '../baseCoin/iface';
 import { isValidEd25519Seed } from '../../utils/crypto';
-import { metadataRpc } from './metaData';
+import { testnetMetadataRpc, westendMetadataRpc, mainnetMetadataRpc } from './metadataRpc';
 import BigNumber from 'bignumber.js';
 import { decodeAddress } from '@polkadot/keyring';
 import { getRegistry, decode } from '@substrate/txwrapper-polkadot';
@@ -156,6 +156,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
    * specVersion - The current spec version for the runtime,
    * chainName - chainName,
    * registry,
+   * of the testnet
    *
    * @returns {TransactionBuilder} This transaction builder.
    *
@@ -164,8 +165,56 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
   testnet(): this {
     this._specName = 'polkadot';
     this._genesisHash = '0x2b8d4fdbb41f4bc15b8a7ec8ed0687f2a1ae11e0fc2dc6604fa962a9421ae349';
-    this._metadataRpc = metadataRpc;
+    this._metadataRpc = testnetMetadataRpc;
     this._specVersion = 9100;
+    this._chainName = 'Polkadot';
+    this.registry();
+    return this;
+  }
+
+  /**
+   * Sets the
+   * specName,
+   * genesisHash - genesisHash of the chain,
+   * metadataRpc - The SCALE-encoded metadata for the runtime when submitted,
+   * specVersion - The current spec version for the runtime,
+   * chainName - chainName,
+   * registry,
+   * of the westened
+   *
+   * @returns {TransactionBuilder} This transaction builder.
+   *
+   * @see https://wiki.polkadot.network/docs/build-transaction-construction
+   */
+  westend(): this {
+    this._specName = 'westend';
+    this._genesisHash = '0xe143f23803ac50e8f6f8e62695d1ce9e4e1d68aa36c1cd2cfd15340213f3423e';
+    this._metadataRpc = westendMetadataRpc;
+    this._specVersion = 9122;
+    this._chainName = 'Westend';
+    this.registry();
+    return this;
+  }
+
+  /**
+   * Sets the
+   * specName,
+   * genesisHash - genesisHash of the chain,
+   * metadataRpc - The SCALE-encoded metadata for the runtime when submitted,
+   * specVersion - The current spec version for the runtime,
+   * chainName - chainName,
+   * registry,
+   * of the mainnet
+   *
+   * @returns {TransactionBuilder} This transaction builder.
+   *
+   * @see https://wiki.polkadot.network/docs/build-transaction-construction
+   */
+  mainnet(): this {
+    this._specName = 'polkadot';
+    this._genesisHash = '0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3';
+    this._metadataRpc = mainnetMetadataRpc;
+    this._specVersion = 9122;
     this._chainName = 'Polkadot';
     this.registry();
     return this;
@@ -188,7 +237,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
   /** @inheritdoc */
   protected fromImplementation(rawTransaction: string): Transaction {
     const decodedTxn = decode(rawTransaction, {
-      metadataRpc: metadataRpc,
+      metadataRpc: testnetMetadataRpc,
       registry: Utils.getDefaultRegistry(),
     }) as DecodedSigningPayload | DecodedSignedTx;
 
@@ -288,7 +337,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
   /** @inheritdoc */
   validateRawTransaction(rawTransaction: string): void {
     const decodedTxn = decode(rawTransaction, {
-      metadataRpc: metadataRpc,
+      metadataRpc: testnetMetadataRpc,
       registry: Utils.getDefaultRegistry(),
     }) as DecodedSigningPayload | DecodedSignedTx;
 

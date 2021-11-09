@@ -7,7 +7,7 @@ import { TransferBuilder } from './transferBuilder';
 import { ProxyBuilder } from './proxyBuilder';
 import { AddProxyBuilder } from './addProxyBuilder';
 import { StakeBuilder } from './stakeBuilder';
-import { metadataRpc } from './metaData';
+import { testnetMetadataRpc } from './metadataRpc';
 import { MethodNames } from './iface';
 import Utils from './utils';
 
@@ -41,7 +41,7 @@ export class TransactionBuilderFactory extends BaseTransactionBuilderFactory {
 
   private getBuilder(rawTxn: string): TransactionBuilder {
     const decodedTxn = decode(rawTxn, {
-      metadataRpc: metadataRpc,
+      metadataRpc: testnetMetadataRpc,
       registry: Utils.getDefaultRegistry(),
     });
     if (decodedTxn.method?.name === MethodNames.TransferKeepAlive) {

@@ -8,8 +8,8 @@ import { UnsignedTransaction } from '@substrate/txwrapper-core';
 import { TransactionType } from '../baseCoin';
 import { AddProxyArgs, MethodNames, proxyType } from './iface';
 import { AddProxyTransactionSchema } from './txnSchema';
+import { testnetMetadataRpc } from './metadataRpc';
 import Utils from './utils';
-import { metadataRpc } from './metaData';
 
 export class AddProxyBuilder extends TransactionBuilder {
   protected _delegate: string;
@@ -87,7 +87,7 @@ export class AddProxyBuilder extends TransactionBuilder {
   validateRawTransaction(rawTransaction: string): void {
     super.validateRawTransaction(rawTransaction);
     const decodedTxn = decode(rawTransaction, {
-      metadataRpc: metadataRpc,
+      metadataRpc: testnetMetadataRpc,
       registry: Utils.getDefaultRegistry(),
     });
     if (decodedTxn.method?.name === MethodNames.AddProxy) {

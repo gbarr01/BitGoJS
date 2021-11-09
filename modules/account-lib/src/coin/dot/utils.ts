@@ -13,9 +13,9 @@ import { EXTRINSIC_VERSION } from '@polkadot/types/extrinsic/v4/Extrinsic';
 import { createMetadata, construct, getRegistry } from '@substrate/txwrapper-polkadot';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { UnsignedTransaction } from '@substrate/txwrapper-core';
+import { testnetMetadataRpc } from './metadataRpc';
 const polkaUtils = require('@polkadot/util');
 const { createTypeUnsafe } = require('@polkadot/types');
-import { metadataRpc } from './metaData';
 
 export class Utils implements BaseUtils {
   /** @inheritdoc */
@@ -146,7 +146,7 @@ export class Utils implements BaseUtils {
       chainName: 'Polkadot',
       specName: 'polkadot',
       specVersion: 9100,
-      metadataRpc: metadataRpc,
+      metadataRpc: testnetMetadataRpc,
     });
   }
 }

@@ -10,8 +10,8 @@ import { MethodNames, StakeArgs, StakeArgsPayee, StakeArgsPayeeRaw } from './ifa
 import { Transaction } from './transaction';
 import { TransactionBuilder } from './transactionBuilder';
 import { StakeTransactionSchema } from './txnSchema';
+import { testnetMetadataRpc } from './metadataRpc';
 import { KeyPair } from '.';
-import { metadataRpc } from './metaData';
 
 export class StakeBuilder extends TransactionBuilder {
   protected _amount: string;
@@ -93,7 +93,7 @@ export class StakeBuilder extends TransactionBuilder {
   validateRawTransaction(rawTransaction: string): void {
     super.validateRawTransaction(rawTransaction);
     const decodedTxn = decode(rawTransaction, {
-      metadataRpc: metadataRpc,
+      metadataRpc: testnetMetadataRpc,
       registry: utils.getDefaultRegistry(),
     });
     if (decodedTxn.method?.name === MethodNames.Bond) {
