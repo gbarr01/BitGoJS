@@ -31,8 +31,8 @@ describe('Dot Transfer Builder', () => {
       builder
         .testnet()
         .amount('90034235235322')
-        .dest(receiver.address)
-        .sender(sender.address)
+        .to({ address: receiver.address })
+        .sender({ address: sender.address })
         .validity({ firstValid: 3933 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .sequenceId({ name: 'Nonce', keyword: 'nonce', value: 200 })
@@ -60,8 +60,8 @@ describe('Dot Transfer Builder', () => {
       builder
         .testnet()
         .amount('90034235235322')
-        .dest(receiver.address)
-        .sender(sender.address)
+        .to({ address: receiver.address })
+        .sender({ address: sender.address })
         .validity({ firstValid: 3933 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .sequenceId({ name: 'Nonce', keyword: 'nonce', value: 200 })
@@ -113,7 +113,7 @@ describe('Dot Transfer Builder', () => {
         .testnet()
         .validity({ firstValid: 3933 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
-        .sender(sender.address)
+        .sender({ address: sender.address })
         .sign({ key: sender.secretKey });
       const tx = await builder.build();
       const txJson = tx.toJson();

@@ -43,15 +43,15 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
    *
    * Sets the address of sending account.
    *
-   * @param {string} sender The SS58-encoded address.
+   * @param {BaseAddress} address The SS58-encoded address.
    * @returns {TransactionBuilder} This transaction builder.
    *
    * @see https://wiki.polkadot.network/docs/build-transaction-construction
    */
-  sender(sender: string): this {
-    this.validateAddress({ address: sender });
-    this._sender = sender;
-    this._transaction.sender(sender);
+  sender({ address }: BaseAddress): this {
+    this.validateAddress({ address });
+    this._sender = address;
+    this._transaction.sender(address);
     return this;
   }
   /**
@@ -144,6 +144,76 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
     return this;
   }
 
+  /**
+   *
+   * The spec name for the registry.
+   *
+   * @param {specNameType} specName
+   * @returns {TransactionBuilder} This transaction builder.
+   *
+   * @see https://wiki.polkadot.network/docs/build-transaction-construction
+   */
+  specName(specName: specNameType): this {
+    this._specName = specName;
+    return this;
+  }
+
+  /**
+   *
+   * The genesis hash of the chain.
+   *
+   * @param {string} genesisHash
+   * @returns {TransactionBuilder} This transaction builder.
+   *
+   * @see https://wiki.polkadot.network/docs/build-transaction-construction
+   */
+  genesisHash(genesisHash: string): this {
+    this._genesisHash = genesisHash;
+    return this;
+  }
+
+  /**
+   *
+   * The raw metadata of the chain in string format.
+   *
+   * @param {string} metadataRpc
+   * @returns {TransactionBuilder} This transaction builder.
+   *
+   * @see https://wiki.polkadot.network/docs/build-transaction-construction
+   */
+  metadataRpc(metadataRpc: string): this {
+    this._metadataRpc = metadataRpc;
+    return this;
+  }
+
+  /**
+   *
+   * The specVersion for transaction format.
+   *
+   * @param {number} specVersion
+   * @returns {TransactionBuilder} This transaction builder.
+   *
+   * @see https://wiki.polkadot.network/docs/build-transaction-construction
+   */
+  specVersion(specVersion: number): this {
+    this._specVersion = specVersion;
+    return this;
+  }
+
+  /**
+   *
+   * The chainName for transaction format.
+   *
+   * @param {number} chainName
+   * @returns {TransactionBuilder} This transaction builder.
+   *
+   * @see https://wiki.polkadot.network/docs/build-transaction-construction
+   */
+  chainName(chainName: string): this {
+    this._chainName = chainName;
+    return this;
+  }
+
   private method(method: TxMethod): this {
     this._method = method;
     return this;
@@ -163,12 +233,12 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
    * @see https://wiki.polkadot.network/docs/build-transaction-construction
    */
   testnet(): this {
-    this._specName = 'polkadot';
-    this._genesisHash = '0x2b8d4fdbb41f4bc15b8a7ec8ed0687f2a1ae11e0fc2dc6604fa962a9421ae349';
-    this._metadataRpc = testnetMetadataRpc;
-    this._specVersion = 9100;
-    this._chainName = 'Polkadot';
-    this.registry();
+    this.specName('polkadot');
+    this.genesisHash('0x2b8d4fdbb41f4bc15b8a7ec8ed0687f2a1ae11e0fc2dc6604fa962a9421ae349');
+    this.metadataRpc(testnetMetadataRpc);
+    this.specVersion(9100);
+    this.chainName('Polkadot');
+    this.buildRegistry();
     return this;
   }
 
@@ -187,12 +257,12 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
    * @see https://wiki.polkadot.network/docs/build-transaction-construction
    */
   westend(): this {
-    this._specName = 'westend';
-    this._genesisHash = '0xe143f23803ac50e8f6f8e62695d1ce9e4e1d68aa36c1cd2cfd15340213f3423e';
-    this._metadataRpc = westendMetadataRpc;
-    this._specVersion = 9122;
-    this._chainName = 'Westend';
-    this.registry();
+    this.specName('westend');
+    this.genesisHash('0xe143f23803ac50e8f6f8e62695d1ce9e4e1d68aa36c1cd2cfd15340213f3423e');
+    this.metadataRpc(westendMetadataRpc);
+    this.specVersion(9122);
+    this.chainName('Westend');
+    this.buildRegistry();
     return this;
   }
 
@@ -211,12 +281,12 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
    * @see https://wiki.polkadot.network/docs/build-transaction-construction
    */
   mainnet(): this {
-    this._specName = 'polkadot';
-    this._genesisHash = '0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3';
-    this._metadataRpc = mainnetMetadataRpc;
-    this._specVersion = 9122;
-    this._chainName = 'Polkadot';
-    this.registry();
+    this.specName('polkadot');
+    this.genesisHash('0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3');
+    this.metadataRpc(mainnetMetadataRpc);
+    this.specVersion(9122);
+    this.chainName('Polkadot');
+    this.buildRegistry();
     return this;
   }
 
@@ -248,7 +318,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
       const keypair = new KeyPair({
         pub: Buffer.from(decodeAddress(decodedTxn.address)).toString('hex'),
       });
-      this.sender(keypair.getAddress());
+      this.sender({ address: keypair.getAddress() });
     }
     this.durationConfig({ maxDuration: decodedTxn.eraPeriod });
     this.sequenceId({
@@ -293,7 +363,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
       },
     };
   }
-  private registry(): this {
+  buildRegistry(): this {
     this._registry = getRegistry({
       chainName: this._chainName,
       specName: this._specName,

@@ -56,7 +56,7 @@ describe('Dot Stake Builder', () => {
         .amount('90034235235322')
         .controller(receiver.address)
         .payee('Staked')
-        .sender(sender.address)
+        .sender({ address: sender.address })
         .validity({ firstValid: 3933 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .sequenceId({ name: 'Nonce', keyword: 'nonce', value: 200 })
@@ -87,7 +87,7 @@ describe('Dot Stake Builder', () => {
         .amount('90034235235322')
         .controller(receiver.address)
         .payee('Staked')
-        .sender(sender.address)
+        .sender({ address: sender.address })
         .validity({ firstValid: 3933 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .sequenceId({ name: 'Nonce', keyword: 'nonce', value: 200 })
@@ -139,7 +139,7 @@ describe('Dot Stake Builder', () => {
       builder
         .validity({ firstValid: 3933 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
-        .sender(sender.address)
+        .sender({ address: sender.address })
         .sign({ key: sender.secretKey });
       const tx = await builder.build();
       const txJson = tx.toJson();
@@ -186,7 +186,7 @@ describe('Dot Stake Builder', () => {
       builder
         .validity({ firstValid: 3933 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
-        .sender(sender.address)
+        .sender({ address: sender.address })
         .sign({ key: sender.secretKey });
       const tx = await builder.build();
       const txJson = tx.toJson();

@@ -33,7 +33,7 @@ describe('Dot Proxy Builder', () => {
         .real(real.address)
         .forceProxyType('Any')
         .call(DotResources.rawTx.proxy.transferCall)
-        .sender(sender.address)
+        .sender({ address: sender.address })
         .validity({ firstValid: 3933 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .sequenceId({ name: 'Nonce', keyword: 'nonce', value: 200 })
@@ -64,7 +64,7 @@ describe('Dot Proxy Builder', () => {
         .real(real.address)
         .forceProxyType('Any')
         .call(DotResources.rawTx.proxy.transferCall)
-        .sender(sender.address)
+        .sender({ address: sender.address })
         .validity({ firstValid: 3933 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .sequenceId({ name: 'Nonce', keyword: 'nonce', value: 200 })
@@ -116,7 +116,7 @@ describe('Dot Proxy Builder', () => {
       builder
         .validity({ firstValid: 3933 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
-        .sender(sender.address)
+        .sender({ address: sender.address })
         .sign({ key: sender.secretKey });
       const tx = await builder.build();
       const txJson = tx.toJson();

@@ -96,10 +96,10 @@ describe('Dot Transfer Builder', () => {
     it('should validate sender address', () => {
       const spy = sinon.spy(builder, 'validateAddress');
       should.throws(
-        () => builder.sender('asd'),
+        () => builder.sender({ address: 'asd' }),
         (e: Error) => e.message === `The address 'asd' is not a well-formed dot address`,
       );
-      should.doesNotThrow(() => builder.sender(sender.address));
+      should.doesNotThrow(() => builder.sender({ address: sender.address }));
       assert.calledTwice(spy);
     });
 
@@ -148,7 +148,7 @@ describe('Dot Transfer Builder', () => {
     it('should build validate base fields', async () => {
       builder
         .testnet()
-        .sender(sender.address)
+        .sender({ address: sender.address })
         .validity({ firstValid: 3933 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .sequenceId({ name: 'Nonce', keyword: 'nonce', value: 200 })

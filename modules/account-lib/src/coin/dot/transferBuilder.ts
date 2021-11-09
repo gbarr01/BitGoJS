@@ -10,6 +10,7 @@ import { MethodNames, TransferArgs } from './iface';
 import { TransferTransactionSchema } from './txnSchema';
 import { testnetMetadataRpc } from './metadataRpc';
 import Utils from './utils';
+import { BaseAddress } from '../baseCoin/iface';
 
 export class TransferBuilder extends TransactionBuilder {
   protected _amount: string;
@@ -53,9 +54,9 @@ export class TransferBuilder extends TransactionBuilder {
    *
    * @see https://wiki.polkadot.network/docs/build-protocol-info
    */
-  dest(dest: string): this {
-    this.validateAddress({ address: dest });
-    this._dest = dest;
+  to({ address }: BaseAddress): this {
+    this.validateAddress({ address });
+    this._dest = address;
     return this;
   }
   protected get transactionType(): TransactionType {
@@ -84,7 +85,7 @@ export class TransferBuilder extends TransactionBuilder {
     if (this._method?.name === MethodNames.TransferKeepAlive) {
       const txMethod = this._method.args as TransferArgs;
       this.amount(txMethod.value);
-      this.dest(txMethod.dest.id);
+      this.to({ address: txMethod.dest.id });
     } else {
       throw new InvalidTransactionError(`Invalid Transaction Type: ${this._method?.name}. Expected transferKeepAlive`);
     }

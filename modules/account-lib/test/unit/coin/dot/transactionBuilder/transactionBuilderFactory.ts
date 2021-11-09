@@ -23,7 +23,7 @@ describe('dot Transaction Builder Factory', () => {
       .validity({ firstValid: 3933 })
       .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
       .transactionVersion(7)
-      .sender(sender.address);
+      .sender({ address: sender.address });
     const tx = await builder.build();
     should.equal(tx.toBroadcastFormat(), rawTx.transfer.unsigned);
   });
@@ -35,7 +35,7 @@ describe('dot Transaction Builder Factory', () => {
       .validity({ firstValid: 3933 })
       .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
       .transactionVersion(7)
-      .sender(sender.address)
+      .sender({ address: sender.address })
       .sign({ key: sender.secretKey });
     const tx = await builder.build();
     should.equal(tx.toBroadcastFormat(), rawTx.transfer.signed);
@@ -48,7 +48,7 @@ describe('dot Transaction Builder Factory', () => {
       .validity({ firstValid: 3933 })
       .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
       .transactionVersion(7)
-      .sender(sender.address);
+      .sender({ address: sender.address });
     const tx = await builder.build();
     should.equal(tx.toBroadcastFormat(), rawTx.addProxy.unsigned);
   });
@@ -73,7 +73,7 @@ describe('dot Transaction Builder Factory', () => {
       .testnet()
       .validity({ firstValid: 3933 })
       .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
-      .sender(sender.address)
+      .sender({ address: sender.address })
       .transactionVersion(7);
     const tx = await builder.build();
     should.equal(tx.toBroadcastFormat(), rawTx.proxy.unsigned);
@@ -85,7 +85,7 @@ describe('dot Transaction Builder Factory', () => {
       .testnet()
       .validity({ firstValid: 3933 })
       .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
-      .sender(sender2.address)
+      .sender({ address: sender2.address })
       .transactionVersion(7)
       .sign({ key: sender2.secretKey });
     const tx = await builder.build();
@@ -99,7 +99,7 @@ describe('dot Transaction Builder Factory', () => {
       .testnet()
       .validity({ firstValid: 3933 })
       .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
-      .sender(sender.address);
+      .sender({ address: sender.address });
     const tx = await builder.build();
     should.equal(tx.toBroadcastFormat(), rawTx.stake.unsigned);
   });
@@ -110,7 +110,7 @@ describe('dot Transaction Builder Factory', () => {
       .testnet()
       .validity({ firstValid: 3933 })
       .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
-      .sender(sender.address)
+      .sender({ address: sender.address })
       .transactionVersion(7)
       .sign({ key: sender.secretKey });
     const tx = await builder.build();
