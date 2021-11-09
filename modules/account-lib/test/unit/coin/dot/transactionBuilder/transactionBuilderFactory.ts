@@ -11,6 +11,7 @@ import * as dotResources from '../../../../resources/dot';
 
 describe('dot Transaction Builder Factory', () => {
   const factory = register('dot', TransactionBuilderFactory);
+  factory.testnet();
   const { rawTx } = dotResources;
   const sender = dotResources.accounts.account1;
   const sender2 = dotResources.accounts.account3;
@@ -19,7 +20,6 @@ describe('dot Transaction Builder Factory', () => {
     const builder = factory.from(rawTx.transfer.unsigned);
     should(builder).instanceOf(TransferBuilder);
     builder
-      .testnet()
       .validity({ firstValid: 3933 })
       .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
       .transactionVersion(7)
@@ -31,7 +31,6 @@ describe('dot Transaction Builder Factory', () => {
     const builder = factory.from(rawTx.transfer.signed);
     should(builder).instanceOf(TransferBuilder);
     builder
-      .testnet()
       .validity({ firstValid: 3933 })
       .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
       .transactionVersion(7)
@@ -44,7 +43,6 @@ describe('dot Transaction Builder Factory', () => {
     const builder = factory.from(rawTx.addProxy.unsigned);
     should(builder).instanceOf(AddProxyBuilder);
     builder
-      .testnet()
       .validity({ firstValid: 3933 })
       .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
       .transactionVersion(7)
@@ -57,7 +55,6 @@ describe('dot Transaction Builder Factory', () => {
     const builder = factory.from(rawTx.addProxy.signed);
     should(builder).instanceOf(AddProxyBuilder);
     builder
-      .testnet()
       .validity({ firstValid: 3933 })
       .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
       .transactionVersion(7)
@@ -70,7 +67,6 @@ describe('dot Transaction Builder Factory', () => {
     const builder = factory.from(rawTx.proxy.unsigned);
     should(builder).instanceOf(ProxyBuilder);
     builder
-      .testnet()
       .validity({ firstValid: 3933 })
       .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
       .sender({ address: sender.address })
@@ -82,7 +78,6 @@ describe('dot Transaction Builder Factory', () => {
     const builder = factory.from(rawTx.proxy.signed);
     should(builder).instanceOf(ProxyBuilder);
     builder
-      .testnet()
       .validity({ firstValid: 3933 })
       .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
       .sender({ address: sender2.address })
@@ -96,7 +91,6 @@ describe('dot Transaction Builder Factory', () => {
     const builder = factory.from(rawTx.stake.unsigned);
     should(builder).instanceOf(StakeBuilder);
     builder
-      .testnet()
       .validity({ firstValid: 3933 })
       .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
       .sender({ address: sender.address });
@@ -107,7 +101,6 @@ describe('dot Transaction Builder Factory', () => {
     const builder = factory.from(rawTx.stake.signed);
     should(builder).instanceOf(StakeBuilder);
     builder
-      .testnet()
       .validity({ firstValid: 3933 })
       .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
       .sender({ address: sender.address })

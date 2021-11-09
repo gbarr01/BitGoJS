@@ -307,10 +307,9 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
   /** @inheritdoc */
   protected fromImplementation(rawTransaction: string): Transaction {
     const decodedTxn = decode(rawTransaction, {
-      metadataRpc: testnetMetadataRpc,
-      registry: Utils.getDefaultRegistry(),
+      metadataRpc: this._metadataRpc,
+      registry: this._registry,
     }) as DecodedSigningPayload | DecodedSignedTx;
-
     if (this.isSigningPayload(decodedTxn)) {
       this.blockHash(decodedTxn.blockHash);
       this.transactionVersion(decodedTxn.transactionVersion);
