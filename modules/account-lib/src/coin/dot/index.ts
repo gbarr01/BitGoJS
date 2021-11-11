@@ -1,6 +1,7 @@
 import * as Utils from './utils';
 
 export { KeyPair } from './keyPair';
+export { Transaction } from './transaction';
 export { TransferBuilder } from './transferBuilder';
 export { StakeBuilder } from './stakeBuilder';
 export { ProxyBuilder } from './proxyBuilder';

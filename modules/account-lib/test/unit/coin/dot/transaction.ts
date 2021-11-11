@@ -1,14 +1,13 @@
 import should from 'should';
 import { coins } from '@bitgo/statics';
 import * as DotResources from '../../../resources/dot';
-import { Transaction } from '../../../../src/coin/dot/transaction';
-import { KeyPair } from '../../../../src/coin/dot';
+import { KeyPair, Transaction, TransferBuilder } from '../../../../src/coin/dot';
 
 describe('Dot Transaction', () => {
   let tx: Transaction;
 
   beforeEach(() => {
-    const config = coins.get('algo');
+    const config = coins.get('dot');
     tx = new Transaction(config);
   });
 
@@ -36,6 +35,20 @@ describe('Dot Transaction', () => {
     it('can sign', () => {
       tx.sender(DotResources.accounts.account2.address);
       should.deepEqual(tx.canSign({ key: DotResources.accounts.account2.secretKey }), true);
+    });
+  });
+
+  describe('should build from raw unsigned tx', async () => {
+    it('Transaction size validation', async () => {
+      const builder = new TransferBuilder(coins.get('dot'));
+      builder.from(DotResources.rawTx.transfer.unsigned);
+      builder
+        .testnet()
+        .validity({ firstValid: 3933 })
+        .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
+        .sender(DotResources.accounts.account1.address);
+      const tx = (await builder.build()) as Transaction;
+      should.deepEqual(tx.transactionSize(), DotResources.rawTx.transfer.unsigned.length / 2);
     });
   });
 });

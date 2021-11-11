@@ -18,10 +18,10 @@ describe('Dot Add Proxy Builder', () => {
     it('should validate delay', () => {
       const spy = sinon.spy(builder, 'validateValue');
       should.throws(
-        () => builder.delay(-1),
+        () => builder.delay('-1'),
         (e: Error) => e.message === 'Value cannot be less than zero',
       );
-      should.doesNotThrow(() => builder.delay(0));
+      should.doesNotThrow(() => builder.delay('0'));
       assert.calledTwice(spy);
     });
 
@@ -42,7 +42,7 @@ describe('Dot Add Proxy Builder', () => {
         .testnet()
         .delegate(receiver.address)
         .proxyType('Any')
-        .delay(0)
+        .delay('0')
         .sender({ address: sender.address })
         .validity({ firstValid: 3933 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
@@ -55,7 +55,7 @@ describe('Dot Add Proxy Builder', () => {
       const txJson = tx.toJson();
       should.deepEqual(txJson.delegate, receiver.address);
       should.deepEqual(txJson.proxyType, 'Any');
-      should.deepEqual(txJson.delay, 0);
+      should.deepEqual(txJson.delay, '0');
       should.deepEqual(txJson.sender, sender.address);
       should.deepEqual(txJson.blockNumber, 3933);
       should.deepEqual(txJson.blockHash, '0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d');
@@ -73,7 +73,7 @@ describe('Dot Add Proxy Builder', () => {
         .testnet()
         .delegate(receiver.address)
         .proxyType('Any')
-        .delay(0)
+        .delay('0')
         .sender({ address: sender.address })
         .validity({ firstValid: 3933 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
@@ -85,7 +85,7 @@ describe('Dot Add Proxy Builder', () => {
       const txJson = tx.toJson();
       should.deepEqual(txJson.delegate, receiver.address);
       should.deepEqual(txJson.proxyType, 'Any');
-      should.deepEqual(txJson.delay, 0);
+      should.deepEqual(txJson.delay, '0');
       should.deepEqual(txJson.sender, sender.address);
       should.deepEqual(txJson.blockNumber, 3933);
       should.deepEqual(txJson.blockHash, '0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d');
@@ -108,7 +108,7 @@ describe('Dot Add Proxy Builder', () => {
       const txJson = tx.toJson();
       should.deepEqual(txJson.delegate, receiver.address);
       should.deepEqual(txJson.proxyType, 'Any');
-      should.deepEqual(txJson.delay, 0);
+      should.deepEqual(txJson.delay, '0');
       should.deepEqual(txJson.sender, sender.address);
       should.deepEqual(txJson.blockNumber, 3933);
       should.deepEqual(txJson.blockHash, '0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d');
@@ -132,7 +132,7 @@ describe('Dot Add Proxy Builder', () => {
       const txJson = tx.toJson();
       should.deepEqual(txJson.delegate, receiver.address);
       should.deepEqual(txJson.proxyType, 'Any');
-      should.deepEqual(txJson.delay, 0);
+      should.deepEqual(txJson.delay, '0');
       should.deepEqual(txJson.sender, sender.address);
       should.deepEqual(txJson.blockNumber, 3933);
       should.deepEqual(txJson.blockHash, '0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d');

@@ -21,7 +21,15 @@ export class StakeBuilder extends TransactionBuilder {
   constructor(_coinConfig: Readonly<CoinConfig>) {
     super(_coinConfig);
   }
-
+  /**
+   *
+   * Take the origin account as a stash and lock up value of its balance.
+   * Controller will be the account that controls it.
+   *
+   * @returns {UnsignedTransaction} an unsigned Dot transaction
+   *
+   * @see https://polkadot.js.org/docs/substrate/extrinsics/#staking
+   */
   protected buildDotTxn(): UnsignedTransaction {
     const baseTxInfo = this.createBaseTxInfo();
     return methods.staking.bond(

@@ -60,7 +60,7 @@ export const AddProxyTransactionSchema = joi.object({
     .valid('Any', 'NonTransfer', 'Governance', 'Staking', 'UnusedSudoBalances', 'IdentityJudgement', 'CancelProxy')
     .required(),
   delegate: addressSchema.required(),
-  delay: joi.number().required(),
+  delay: joi.string().required(),
 });
 
 export const ProxyTransactionSchema = joi.object({

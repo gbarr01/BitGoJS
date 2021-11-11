@@ -36,7 +36,7 @@ export interface TxData {
   payee?: string;
   delegate?: string;
   proxyType?: string;
-  delay?: number;
+  delay?: string;
   real?: string;
   forceProxyType?: proxyType;
   call?: string;
@@ -97,15 +97,6 @@ export interface TxMethod {
 
 export interface DecodedTx extends Omit<DecodedUnsignedTx, 'method'> {
   method: TxMethod;
-}
-
-export interface SignedTxData {
-  blockHash: string;
-  blockNumber: string;
-  genesisHash: string;
-  specVersion: string;
-  transactionVersion: string;
-  chainName: string;
 }
 
 export interface CreateBaseTxInfo {

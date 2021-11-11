@@ -18,7 +18,14 @@ export class ProxyBuilder extends TransactionBuilder {
   constructor(_coinConfig: Readonly<CoinConfig>) {
     super(_coinConfig);
   }
-
+  /**
+   *
+   * Dispatch the given call from an account that the sender is authorised for through add_proxy.
+   *
+   * @returns {UnsignedTransaction} an unsigned Dot transaction
+   *
+   * @see https://polkadot.js.org/docs/substrate/extrinsics/#proxy
+   */
   protected buildDotTxn(): UnsignedTransaction {
     const baseTxInfo = this.createBaseTxInfo();
     return methods.proxy.proxy(

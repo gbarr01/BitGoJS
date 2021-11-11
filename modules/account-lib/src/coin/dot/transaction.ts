@@ -94,6 +94,10 @@ export class Transaction extends BaseTransaction {
     }
   }
 
+  transactionSize(): number {
+    return this.toBroadcastFormat().length / 2;
+  }
+
   /** @inheritdoc */
   toJson(): TxData {
     if (!this._dotTransaction) {
@@ -155,7 +159,7 @@ export class Transaction extends BaseTransaction {
       });
       result.delegate = keypair.getAddress();
       result.proxyType = txMethod.proxyType;
-      result.delay = parseInt(txMethod.delay, 10);
+      result.delay = txMethod.delay;
     }
 
     if (this.type === TransactionType.Proxy) {

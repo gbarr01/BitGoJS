@@ -14,12 +14,20 @@ import Utils from './utils';
 export class AddProxyBuilder extends TransactionBuilder {
   protected _delegate: string;
   protected _proxyType: proxyType;
-  protected _delay: number;
+  protected _delay: string;
 
   constructor(_coinConfig: Readonly<CoinConfig>) {
     super(_coinConfig);
   }
 
+  /**
+   *
+   * Register a proxy account for the sender that is able to make calls on its behalf.
+   *
+   * @returns {UnsignedTransaction} an unsigned Dot transaction
+   *
+   * @see https://polkadot.js.org/docs/substrate/extrinsics/#proxy
+   */
   protected buildDotTxn(): UnsignedTransaction {
     const baseTxInfo = this.createBaseTxInfo();
     return methods.proxy.addProxy(
@@ -72,13 +80,13 @@ export class AddProxyBuilder extends TransactionBuilder {
    * before the corresponding call may be dispatched.
    * If zero, then no announcement is needed.
    *
-   * @param {number} delay
+   * @param {string} delay
    * @returns {AddProxyBuilder} This transfer builder.
    *
    * @see https://wiki.polkadot.network/docs/learn-proxies#time-delayed-proxies
    */
-  delay(delay: number): this {
-    this.validateValue(new BigNumber(delay));
+  delay(delay: string): this {
+    this.validateValue(new BigNumber(parseInt(delay, 10)));
     this._delay = delay;
     return this;
   }
@@ -109,7 +117,7 @@ export class AddProxyBuilder extends TransactionBuilder {
       const txMethod = this._method.args as AddProxyArgs;
       this.delegate(txMethod.delegate);
       this.proxyType(txMethod.proxyType);
-      this.delay(parseInt(txMethod.delay, 10));
+      this.delay(new BigNumber(txMethod.delay).toString());
     } else {
       throw new InvalidTransactionError(`Invalid Transaction Type: ${this._method?.name}. Expected addProxy`);
     }
@@ -122,7 +130,7 @@ export class AddProxyBuilder extends TransactionBuilder {
     this.validateFields(this._delegate, this._proxyType, this._delay);
   }
 
-  private validateFields(delegate: string, proxyType: string, delay: number): void {
+  private validateFields(delegate: string, proxyType: string, delay: string): void {
     const validationResult = AddProxyTransactionSchema.validate({
       delegate,
       proxyType,

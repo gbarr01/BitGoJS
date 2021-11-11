@@ -19,7 +19,15 @@ export class TransferBuilder extends TransactionBuilder {
   constructor(_coinConfig: Readonly<CoinConfig>) {
     super(_coinConfig);
   }
-  /** @inheritdoc */
+  /**
+   *
+   *
+   * Move some assets from the sender account to another, keeping the sender account alive.
+   *
+   * @returns {UnsignedTransaction} an unsigned Dot transaction
+   *
+   * @see https://polkadot.js.org/docs/substrate/extrinsics/#balances
+   */
   protected buildDotTxn(): UnsignedTransaction {
     const baseTxInfo = this.createBaseTxInfo();
     return methods.balances.transferKeepAlive(
