@@ -7,7 +7,6 @@ import { UnsignedTransaction } from '@substrate/txwrapper-core';
 import { TransactionType } from '../baseCoin';
 import { MethodNames, ProxyArgs, proxyType } from './iface';
 import { ProxyTransactionSchema } from './txnSchema';
-import { testnetMetadataRpc } from './metadataRpc';
 import utils from './utils';
 
 export class ProxyBuilder extends TransactionBuilder {
@@ -90,16 +89,16 @@ export class ProxyBuilder extends TransactionBuilder {
   validateRawTransaction(rawTransaction: string): void {
     super.validateRawTransaction(rawTransaction);
     const decodedTxn = decode(rawTransaction, {
-      metadataRpc: testnetMetadataRpc,
-      registry: utils.getDefaultRegistry(),
+      metadataRpc: this._metadataRpc,
+      registry: this._registry,
     });
     if (decodedTxn.method?.name === MethodNames.Proxy) {
       const txMethod = decodedTxn.method.args as unknown as ProxyArgs;
       const real = txMethod.real;
       const forceProxyType = txMethod.forceProxyType;
       const decodedCall = utils.decodeCallMethod(rawTransaction, {
-        registry: utils.getDefaultRegistry(),
-        metadataRpc: testnetMetadataRpc,
+        registry: this._registry,
+        metadataRpc: this._metadataRpc,
       });
       const validationResult = ProxyTransactionSchema.validate({ real, forceProxyType, call: decodedCall });
       if (validationResult.error) {
@@ -109,15 +108,15 @@ export class ProxyBuilder extends TransactionBuilder {
   }
 
   /** @inheritdoc */
-  protected fromImplementation(rawTransaction: any): Transaction {
+  protected fromImplementation(rawTransaction: string): Transaction {
     const tx = super.fromImplementation(rawTransaction);
     if (this._method?.name === MethodNames.Proxy) {
       const txMethod = this._method.args as ProxyArgs;
       this.real(txMethod.real);
       this.forceProxyType(txMethod.forceProxyType);
       const decodedCall = utils.decodeCallMethod(rawTransaction, {
-        registry: utils.getDefaultRegistry(),
-        metadataRpc: testnetMetadataRpc,
+        registry: this._registry,
+        metadataRpc: this._metadataRpc,
       });
       this.call(decodedCall);
     } else {
@@ -140,7 +139,7 @@ export class ProxyBuilder extends TransactionBuilder {
     });
 
     if (validationResult.error) {
-      throw new InvalidTransactionError(`Transaction validation failed: ${validationResult.error.message}`);
+      throw new InvalidTransactionError(`Proxy Transaction validation failed: ${validationResult.error.message}`);
     }
   }
 }

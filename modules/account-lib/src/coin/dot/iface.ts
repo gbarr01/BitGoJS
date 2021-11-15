@@ -17,6 +17,7 @@ export enum MethodNames {
   Proxy = 'proxy',
   Bond = 'bond',
   TransferKeepAlive = 'transferKeepAlive',
+  Unbond = 'unbond',
 }
 
 /**
@@ -88,6 +89,10 @@ export interface StakeArgs {
   payee: StakeArgsPayee;
 }
 
+export interface UnstakeArgs {
+  value: string;
+}
+
 /**
  * The types of proxies that can be setup and used
  * https://wiki.polkadot.network/docs/learn-proxies#proxy-types
@@ -117,7 +122,7 @@ export type ProxyCallArgs =
   | string
   | {
       callIndex?: string;
-      args?: TransferArgs | StakeArgs;
+      args?: TransferArgs | StakeArgs | UnstakeArgs;
     };
 
 /**
@@ -133,8 +138,8 @@ export interface ProxyArgs {
  * Decoded TxMethod from a transaction hex
  */
 export interface TxMethod {
-  args: TransferArgs | StakeArgs | AddProxyArgs | ProxyArgs;
-  name: 'transferKeepAlive' | 'bond' | 'addProxy' | 'proxy';
+  args: TransferArgs | StakeArgs | AddProxyArgs | ProxyArgs | UnstakeArgs;
+  name: 'transferKeepAlive' | 'bond' | 'addProxy' | 'proxy' | 'unbond';
   pallet: string;
 }
 

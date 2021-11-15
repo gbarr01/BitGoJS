@@ -10,6 +10,7 @@ import { AddProxyBuilder } from './addProxyBuilder';
 import { StakeBuilder } from './stakeBuilder';
 import { mainnetMetadataRpc, testnetMetadataRpc, westendMetadataRpc } from './metadataRpc';
 import { MethodNames, specNameType } from './iface';
+import { UnstakeBuilder } from '.';
 
 export class TransactionBuilderFactory extends BaseTransactionBuilderFactory {
   protected _specVersion: number;
@@ -37,6 +38,10 @@ export class TransactionBuilderFactory extends BaseTransactionBuilderFactory {
 
   getAddProxyBuilder(): AddProxyBuilder {
     return new AddProxyBuilder(this._coinConfig);
+  }
+
+  getUnstakeBuilder(): UnstakeBuilder {
+    return new UnstakeBuilder(this._coinConfig);
   }
 
   from(rawTxn: string): TransactionBuilder {
@@ -219,6 +224,8 @@ export class TransactionBuilderFactory extends BaseTransactionBuilderFactory {
       return this.getAddProxyBuilder();
     } else if (decodedTxn.method?.name === MethodNames.Proxy) {
       return this.getProxyBuilder();
+    } else if (decodedTxn.method?.name === MethodNames.Unbond) {
+      return this.getUnstakeBuilder();
     } else {
       throw new NotSupported('Transaction cannot be parsed or has an unsupported transaction type');
     }

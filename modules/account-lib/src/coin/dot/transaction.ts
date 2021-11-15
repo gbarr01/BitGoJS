@@ -7,7 +7,16 @@ import { UnsignedTransaction } from '@substrate/txwrapper-core';
 import { TypeRegistry } from '@substrate/txwrapper-core/lib/types';
 import { decodeAddress } from '@polkadot/keyring';
 import { KeyPair } from './keyPair';
-import { TxData, DecodedTx, TransferArgs, StakeArgs, StakeArgsPayeeRaw, AddProxyArgs, ProxyArgs } from './iface';
+import {
+  TxData,
+  DecodedTx,
+  TransferArgs,
+  StakeArgs,
+  StakeArgsPayeeRaw,
+  AddProxyArgs,
+  ProxyArgs,
+  UnstakeArgs,
+} from './iface';
 import utils from './utils';
 
 export class Transaction extends BaseTransaction {
@@ -174,6 +183,11 @@ export class Transaction extends BaseTransaction {
         registry: this._registry,
       });
       result.call = decodedCall;
+    }
+
+    if (this.type === TransactionType.StakingUnlock) {
+      const txMethod = decodedTx.method.args as UnstakeArgs;
+      result.amount = txMethod.value;
     }
 
     return result;

@@ -406,8 +406,8 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
   /** @inheritdoc */
   validateRawTransaction(rawTransaction: string): void {
     const decodedTxn = decode(rawTransaction, {
-      metadataRpc: testnetMetadataRpc,
-      registry: Utils.getDefaultRegistry(),
+      metadataRpc: this._metadataRpc,
+      registry: this._registry,
     }) as DecodedSigningPayload | DecodedSignedTx;
 
     const eraPeriod = decodedTxn.eraPeriod;

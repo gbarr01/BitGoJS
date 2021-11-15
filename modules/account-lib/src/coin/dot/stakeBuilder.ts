@@ -10,7 +10,6 @@ import { MethodNames, StakeArgs, StakeArgsPayee, StakeArgsPayeeRaw } from './ifa
 import { Transaction } from './transaction';
 import { TransactionBuilder } from './transactionBuilder';
 import { StakeTransactionSchema } from './txnSchema';
-import { testnetMetadataRpc } from './metadataRpc';
 import { KeyPair } from '.';
 
 export class StakeBuilder extends TransactionBuilder {
@@ -21,6 +20,7 @@ export class StakeBuilder extends TransactionBuilder {
   constructor(_coinConfig: Readonly<CoinConfig>) {
     super(_coinConfig);
   }
+
   /**
    *
    * Take the origin account as a stash and lock up value of its balance.
@@ -101,8 +101,8 @@ export class StakeBuilder extends TransactionBuilder {
   validateRawTransaction(rawTransaction: string): void {
     super.validateRawTransaction(rawTransaction);
     const decodedTxn = decode(rawTransaction, {
-      metadataRpc: testnetMetadataRpc,
-      registry: utils.getDefaultRegistry(),
+      metadataRpc: this._metadataRpc,
+      registry: this._registry,
     });
     if (decodedTxn.method?.name === MethodNames.Bond) {
       const txMethod = decodedTxn.method.args as unknown as StakeArgs;
@@ -154,7 +154,9 @@ export class StakeBuilder extends TransactionBuilder {
     });
 
     if (validationResult.error) {
-      throw new InvalidTransactionError(`Transaction validation failed: ${validationResult.error.message}`);
+      throw new InvalidTransactionError(
+        `Stake Builder Transaction validation failed: ${validationResult.error.message}`,
+      );
     }
   }
 }

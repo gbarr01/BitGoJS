@@ -1,19 +1,18 @@
-import * as hex from '@stablelib/hex';
-import base32 from 'hi-base32';
-import { Keyring, decodeAddress, encodeAddress } from '@polkadot/keyring';
+import { decodeAddress, encodeAddress, Keyring } from '@polkadot/keyring';
+import { decodePair } from '@polkadot/keyring/pair/decode';
+import { KeyringPair } from '@polkadot/keyring/types';
+import { EXTRINSIC_VERSION } from '@polkadot/types/extrinsic/v4/Extrinsic';
 import { hexToU8a, isHex } from '@polkadot/util';
 import { base64Decode } from '@polkadot/util-crypto';
-import { decodePair } from '@polkadot/keyring/pair/decode';
+import * as hex from '@stablelib/hex';
+import { UnsignedTransaction } from '@substrate/txwrapper-core';
+import { TypeRegistry } from '@substrate/txwrapper-core/lib/types';
+import { construct, createMetadata } from '@substrate/txwrapper-polkadot';
+import base32 from 'hi-base32';
 import { KeyPair } from '.';
 import { BaseUtils } from '../baseCoin';
 import { NotImplementedError } from '../baseCoin/errors';
 import { Seed } from './iface';
-import { TypeRegistry } from '@substrate/txwrapper-core/lib/types';
-import { EXTRINSIC_VERSION } from '@polkadot/types/extrinsic/v4/Extrinsic';
-import { createMetadata, construct, getRegistry } from '@substrate/txwrapper-polkadot';
-import { KeyringPair } from '@polkadot/keyring/types';
-import { UnsignedTransaction } from '@substrate/txwrapper-core';
-import { testnetMetadataRpc } from './metadataRpc';
 const polkaUtils = require('@polkadot/util');
 const { createTypeUnsafe } = require('@polkadot/types');
 
@@ -140,14 +139,6 @@ export class Utils implements BaseUtils {
       registry,
     });
     return txHex;
-  }
-  getDefaultRegistry(): TypeRegistry {
-    return getRegistry({
-      chainName: 'Polkadot',
-      specName: 'polkadot',
-      specVersion: 9100,
-      metadataRpc: testnetMetadataRpc,
-    });
   }
 }
 

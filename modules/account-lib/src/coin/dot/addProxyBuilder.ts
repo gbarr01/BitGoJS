@@ -8,8 +8,6 @@ import { UnsignedTransaction } from '@substrate/txwrapper-core';
 import { TransactionType } from '../baseCoin';
 import { AddProxyArgs, MethodNames, proxyType } from './iface';
 import { AddProxyTransactionSchema } from './txnSchema';
-import { testnetMetadataRpc } from './metadataRpc';
-import Utils from './utils';
 
 export class AddProxyBuilder extends TransactionBuilder {
   protected _delegate: string;
@@ -95,8 +93,8 @@ export class AddProxyBuilder extends TransactionBuilder {
   validateRawTransaction(rawTransaction: string): void {
     super.validateRawTransaction(rawTransaction);
     const decodedTxn = decode(rawTransaction, {
-      metadataRpc: testnetMetadataRpc,
-      registry: Utils.getDefaultRegistry(),
+      metadataRpc: this._metadataRpc,
+      registry: this._registry,
     });
     if (decodedTxn.method?.name === MethodNames.AddProxy) {
       const txMethod = decodedTxn.method.args as unknown as AddProxyArgs;
@@ -138,7 +136,7 @@ export class AddProxyBuilder extends TransactionBuilder {
     });
 
     if (validationResult.error) {
-      throw new InvalidTransactionError(`Transaction validation failed: ${validationResult.error.message}`);
+      throw new InvalidTransactionError(`AddProxy Transaction validation failed: ${validationResult.error.message}`);
     }
   }
 }

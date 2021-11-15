@@ -6,6 +6,7 @@ import {
   AddProxyBuilder,
   ProxyBuilder,
   StakeBuilder,
+  UnstakeBuilder,
 } from '../../../../../src/coin/dot';
 import * as dotResources from '../../../../resources/dot';
 
@@ -108,5 +109,28 @@ describe('dot Transaction Builder Factory', () => {
       .sign({ key: sender.secretKey });
     const tx = await builder.build();
     should.equal(tx.toBroadcastFormat(), rawTx.stake.signed);
+  });
+
+  it('should parse an unsigned unstake txn and return an unstake builder', async () => {
+    const builder = factory.from(rawTx.unstake.unsigned);
+    should(builder).instanceOf(UnstakeBuilder);
+    builder
+      .validity({ firstValid: 3933 })
+      .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
+      .sender({ address: sender.address });
+    const tx = await builder.build();
+    should.equal(tx.toBroadcastFormat(), rawTx.unstake.unsigned);
+  });
+  it('should parse a signed unstake txn and return an unstake builder', async () => {
+    const builder = factory.from(rawTx.unstake.signed);
+    should(builder).instanceOf(UnstakeBuilder);
+    builder
+      .validity({ firstValid: 3933 })
+      .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
+      .sender({ address: sender.address })
+      .transactionVersion(7)
+      .sign({ key: sender.secretKey });
+    const tx = await builder.build();
+    should.equal(tx.toBroadcastFormat(), rawTx.unstake.signed);
   });
 });
