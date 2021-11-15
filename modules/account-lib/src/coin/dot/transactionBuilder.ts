@@ -1,4 +1,4 @@
-import { BaseCoin as CoinConfig } from '@bitgo/statics';
+import { BaseCoin as CoinConfig, DotNetwork } from '@bitgo/statics';
 import { BaseTransactionBuilder, TransactionType } from '../baseCoin';
 import { InvalidTransactionError, BuildTransactionError } from '../baseCoin/errors';
 import { BaseAddress, BaseKey } from '../baseCoin/iface';
@@ -38,6 +38,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
   constructor(_coinConfig: Readonly<CoinConfig>) {
     super(_coinConfig);
     this._transaction = new Transaction(_coinConfig);
+    this.staticsConfig();
   }
   /**
    *
@@ -243,6 +244,17 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
   }
 
   /**
+   * Set the network based on the configuration in the statics module
+   */
+  private staticsConfig(): void {
+    const networkConfig = this._coinConfig.network as DotNetwork;
+    this.specName(networkConfig.specName as specNameType);
+    this.genesisHash(networkConfig.genesisHash);
+    this.specVersion(networkConfig.specVersion);
+    this.chainName(networkConfig.chainName);
+  }
+
+  /**
    * Sets the
    * specName,
    * genesisHash - genesisHash of the chain,
@@ -257,11 +269,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
    * @see https://wiki.polkadot.network/docs/build-transaction-construction
    */
   westend(): this {
-    this.specName('westend');
-    this.genesisHash('0xe143f23803ac50e8f6f8e62695d1ce9e4e1d68aa36c1cd2cfd15340213f3423e');
     this.metadataRpc(westendMetadataRpc);
-    this.specVersion(9122);
-    this.chainName('Westend');
     this.buildRegistry();
     return this;
   }
@@ -281,11 +289,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
    * @see https://wiki.polkadot.network/docs/build-transaction-construction
    */
   mainnet(): this {
-    this.specName('polkadot');
-    this.genesisHash('0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3');
     this.metadataRpc(mainnetMetadataRpc);
-    this.specVersion(9122);
-    this.chainName('Polkadot');
     this.buildRegistry();
     return this;
   }

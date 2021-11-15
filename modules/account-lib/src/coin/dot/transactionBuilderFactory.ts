@@ -1,4 +1,4 @@
-import { BaseCoin as CoinConfig } from '@bitgo/statics';
+import { BaseCoin as CoinConfig, DotNetwork } from '@bitgo/statics';
 import { BaseTransactionBuilderFactory } from '../baseCoin';
 import { BuildTransactionError, NotSupported } from '../baseCoin/errors';
 import { decode, getRegistry } from '@substrate/txwrapper-polkadot';
@@ -22,6 +22,7 @@ export class TransactionBuilderFactory extends BaseTransactionBuilderFactory {
 
   constructor(_coinConfig: Readonly<CoinConfig>) {
     super(_coinConfig);
+    this.staticsConfig();
   }
 
   getTransferBuilder(): TransferBuilder {
@@ -160,6 +161,14 @@ export class TransactionBuilderFactory extends BaseTransactionBuilderFactory {
     return this;
   }
 
+  private staticsConfig(): void {
+    const networkConfig = this._coinConfig.network as DotNetwork;
+    this.specName(networkConfig.specName as specNameType);
+    this.genesisHash(networkConfig.genesisHash);
+    this.specVersion(networkConfig.specVersion);
+    this.chainName(networkConfig.chainName);
+  }
+
   /**
    * Sets the
    * specName,
@@ -175,11 +184,7 @@ export class TransactionBuilderFactory extends BaseTransactionBuilderFactory {
    * @see https://wiki.polkadot.network/docs/build-transaction-construction
    */
   westend(): this {
-    this.specName('westend');
     this.metadataRpc(westendMetadataRpc);
-    this.specVersion(9122);
-    this.chainName('Westend');
-    this.genesisHash('0xe143f23803ac50e8f6f8e62695d1ce9e4e1d68aa36c1cd2cfd15340213f3423e');
     this.buildRegistry();
     return this;
   }
@@ -199,11 +204,7 @@ export class TransactionBuilderFactory extends BaseTransactionBuilderFactory {
    * @see https://wiki.polkadot.network/docs/build-transaction-construction
    */
   mainnet(): this {
-    this.specName('polkadot');
     this.metadataRpc(mainnetMetadataRpc);
-    this.specVersion(9122);
-    this.chainName('Polkadot');
-    this.genesisHash('0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3');
     this.buildRegistry();
     return this;
   }
