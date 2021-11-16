@@ -57,12 +57,11 @@ describe('Dot Stake Builder', () => {
         .controller(receiver.address)
         .payee('Staked')
         .sender({ address: sender.address })
-        .validity({ firstValid: 3933 })
+        .validity({ firstValid: 3933, maxDuration: 64 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .sequenceId({ name: 'Nonce', keyword: 'nonce', value: 200 })
-        .tip(0)
-        .transactionVersion(7)
-        .durationConfig({ maxDuration: 64 });
+        .fee({ amount: 0, type: 'tip' })
+        .transactionVersion(7);
       builder.sign({ key: sender.secretKey });
       const tx = await builder.build();
       const txJson = tx.toJson();
@@ -88,12 +87,11 @@ describe('Dot Stake Builder', () => {
         .controller(receiver.address)
         .payee('Staked')
         .sender({ address: sender.address })
-        .validity({ firstValid: 3933 })
+        .validity({ firstValid: 3933, maxDuration: 64 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .sequenceId({ name: 'Nonce', keyword: 'nonce', value: 200 })
-        .tip(0)
-        .transactionVersion(7)
-        .durationConfig({ maxDuration: 64 });
+        .fee({ amount: 0, type: 'tip' })
+        .transactionVersion(7);
       const tx = await builder.build();
       const txJson = tx.toJson();
       should.deepEqual(txJson.amount, '90034235235322');

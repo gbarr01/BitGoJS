@@ -52,7 +52,7 @@ export class StakeBuilder extends TransactionBuilder {
    * The amount to stake.
    *
    * @param {string} amount
-   * @returns {StakeBuilder} This transfer builder.
+   * @returns {StakeBuilder} This stake builder.
    *
    * @see https://wiki.polkadot.network/docs/learn-nominator#required-minimum-stake
    */
@@ -67,7 +67,7 @@ export class StakeBuilder extends TransactionBuilder {
    * The controller of the staked amount.
    *
    * @param {string} controller
-   * @returns {StakeBuilder} This transfer builder.
+   * @returns {StakeBuilder} This stake builder.
    *
    * @see https://wiki.polkadot.network/docs/learn-staking#accounts
    */
@@ -83,7 +83,7 @@ export class StakeBuilder extends TransactionBuilder {
    * Can be set to another accounts address.
    *
    * @param {string} payee
-   * @returns {StakeBuilder} This transfer builder.
+   * @returns {StakeBuilder} This stake builder.
    *
    * @see https://wiki.polkadot.network/docs/learn-staking#4-rewards-mechanism
    */

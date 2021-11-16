@@ -106,10 +106,10 @@ describe('Dot Transfer Builder', () => {
     it('should validate eraPeriod', () => {
       const spy = sinon.spy(builder, 'validateValue');
       should.throws(
-        () => builder.durationConfig({ maxDuration: -1 }),
+        () => builder.validity({ maxDuration: -1 }),
         (e: Error) => e.message === 'Value cannot be less than zero',
       );
-      should.doesNotThrow(() => builder.durationConfig({ maxDuration: 64 }));
+      should.doesNotThrow(() => builder.validity({ maxDuration: 64 }));
       assert.calledTwice(spy);
     });
 
@@ -126,10 +126,10 @@ describe('Dot Transfer Builder', () => {
     it('should validate tip', () => {
       const spy = sinon.spy(builder, 'validateValue');
       should.throws(
-        () => builder.tip(-1),
+        () => builder.fee({ amount: -1, type: 'tip' }),
         (e: Error) => e.message === 'Value cannot be less than zero',
       );
-      should.doesNotThrow(() => builder.tip(10));
+      should.doesNotThrow(() => builder.fee({ amount: 10, type: 'tip' }));
       assert.calledTwice(spy);
     });
 
@@ -149,12 +149,11 @@ describe('Dot Transfer Builder', () => {
       builder
         .testnet()
         .sender({ address: sender.address })
-        .validity({ firstValid: 3933 })
+        .validity({ firstValid: 3933, maxDuration: 64 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .sequenceId({ name: 'Nonce', keyword: 'nonce', value: 200 })
-        .tip(0)
-        .transactionVersion(7)
-        .durationConfig({ maxDuration: 64 });
+        .fee({ amount: 0, type: 'tip' })
+        .transactionVersion(7);
       should.doesNotThrow(() => builder.validateTransaction(builder.getTransaction()));
     });
 
@@ -171,7 +170,7 @@ describe('Dot Transfer Builder', () => {
       should.deepEqual(builder.getSender(), sender.address);
       should.deepEqual(builder.getNonce(), 200);
       should.deepEqual(builder.getEraPeriod(), 64);
-      should.deepEqual(builder.getTip(), 0);
+      should.deepEqual(builder.getTip(), undefined);
     });
 
     it('should build from raw unsigned tx', async () => {
@@ -180,7 +179,7 @@ describe('Dot Transfer Builder', () => {
       should.deepEqual(builder.getTransactionVersion(), 7);
       should.deepEqual(builder.getNonce(), 200);
       should.deepEqual(builder.getEraPeriod(), 64);
-      should.deepEqual(builder.getTip(), 0);
+      should.deepEqual(builder.getTip(), undefined);
     });
   });
 });

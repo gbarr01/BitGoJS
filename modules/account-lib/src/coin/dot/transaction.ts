@@ -40,6 +40,7 @@ export class Transaction extends BaseTransaction {
     return false;
   }
 
+  /** @inheritdoc */
   async sign(keyPair: KeyPair): Promise<void> {
     if (!this._dotTransaction) {
       throw new InvalidTransactionError('No transaction data to sign');
@@ -70,10 +71,6 @@ export class Transaction extends BaseTransaction {
 
   sender(sender: string): void {
     this._sender = sender;
-  }
-
-  signedTransaction(signedTransaction: string): void {
-    this._signedTransaction = signedTransaction;
   }
 
   /**

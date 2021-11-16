@@ -5,6 +5,7 @@ import { Ed25519KeyPair } from '../baseCoin';
 import { AddressFormat } from '../baseCoin/enum';
 import { DefaultKeys, KeyPairOptions } from '../baseCoin/iface';
 import utils from './utils';
+import { toHex } from '../../utils/crypto';
 
 const TYPE = 'ed25519';
 const keyring = new Keyring({ type: TYPE });
@@ -23,6 +24,7 @@ export class KeyPair extends Ed25519KeyPair {
    * Helper function to create the KeyringPair for signing a dot transaction.
    *
    * @returns {KeyringPair} dot KeyringPair
+   *
    * @see https://polkadot.js.org/docs/api/start/keyring
    */
   protected createPolkadotPair(): KeyringPair {
@@ -69,6 +71,6 @@ export class KeyPair extends Ed25519KeyPair {
       publicKey: new Uint8Array(Buffer.from(pub, 'hex')),
       secretKey: new Uint8Array(),
     }).publicKey;
-    return { pub: utils.toHex(publicKey) };
+    return { pub: toHex(publicKey) };
   }
 }

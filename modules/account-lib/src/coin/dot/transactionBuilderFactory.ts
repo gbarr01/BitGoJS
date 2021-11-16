@@ -8,7 +8,7 @@ import { TransferBuilder } from './transferBuilder';
 import { ProxyBuilder } from './proxyBuilder';
 import { AddProxyBuilder } from './addProxyBuilder';
 import { StakeBuilder } from './stakeBuilder';
-import { mainnetMetadataRpc, testnetMetadataRpc, westendMetadataRpc } from './metadataRpc';
+import { mainnetMetadataRpc, testnetMetadataRpc, westendMetadataRpc } from '../../../resources/dot';
 import { MethodNames, specNameType } from './iface';
 import { UnstakeBuilder } from '.';
 

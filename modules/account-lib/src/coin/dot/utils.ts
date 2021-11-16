@@ -4,7 +4,7 @@ import { KeyringPair } from '@polkadot/keyring/types';
 import { EXTRINSIC_VERSION } from '@polkadot/types/extrinsic/v4/Extrinsic';
 import { hexToU8a, isHex } from '@polkadot/util';
 import { base64Decode } from '@polkadot/util-crypto';
-import * as hex from '@stablelib/hex';
+
 import { UnsignedTransaction } from '@substrate/txwrapper-core';
 import { TypeRegistry } from '@substrate/txwrapper-core/lib/types';
 import { construct, createMetadata } from '@substrate/txwrapper-polkadot';
@@ -50,16 +50,6 @@ export class Utils implements BaseUtils {
   /** @inheritdoc */
   isValidTransactionId(txId: string): boolean {
     throw new NotImplementedError('method not implemented');
-  }
-
-  /**
-   * Returns an hex string of the given buffer
-   *
-   * @param {Buffer | Uint8Array} buffer - the buffer to be converted to hex
-   * @returns {string} - the hex value
-   */
-  toHex(buffer: Buffer | Uint8Array): string {
-    return hex.encode(buffer, true);
   }
 
   /**
@@ -117,10 +107,11 @@ export class Utils implements BaseUtils {
     return new KeyPair({ prv: Buffer.from(decodedKeyPair.secretKey).toString('hex') });
   }
 
-  /* * Signing function. Implement this on the OFFLINE signing device.
+  /**
+   * Signing function. Implement this on the OFFLINE signing device.
    *
-   * @param pair - The signing pair.
-   * @param signingPayload - Payload to sign.
+   * @param {KeyringPair} pair - The signing pair.
+   * @param {string} signingPayload - Payload to sign.
    */
   createSignedTx(pair: KeyringPair, signingPayload: string, transaction: UnsignedTransaction, options): string {
     const { registry, metadataRpc } = options;

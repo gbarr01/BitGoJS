@@ -3,7 +3,7 @@ import { BaseTransactionBuilder, TransactionType } from '../baseCoin';
 import { InvalidTransactionError, BuildTransactionError } from '../baseCoin/errors';
 import { BaseAddress, BaseKey } from '../baseCoin/iface';
 import { isValidEd25519Seed } from '../../utils/crypto';
-import { testnetMetadataRpc, westendMetadataRpc, mainnetMetadataRpc } from './metadataRpc';
+import { testnetMetadataRpc, westendMetadataRpc, mainnetMetadataRpc } from '../../../resources/dot';
 import BigNumber from 'bignumber.js';
 import { decodeAddress } from '@polkadot/keyring';
 import { getRegistry, decode } from '@substrate/txwrapper-polkadot';
@@ -12,7 +12,7 @@ import { TypeRegistry, DecodedSignedTx, DecodedSigningPayload } from '@substrate
 import { BaseTransactionSchema, SignedTransactionSchema, SigningPayloadTransactionSchema } from './txnSchema';
 import { Transaction } from './transaction';
 import { KeyPair } from './keyPair';
-import { CreateBaseTxInfo, sequenceId, specNameType, TxMethod, Validity } from './iface';
+import { CreateBaseTxInfo, FeeOptions, sequenceId, specNameType, TxMethod, validityWindow } from './iface';
 import Utils from './utils';
 import { AddressValidationError } from './errors';
 
@@ -55,22 +55,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
     this._transaction.sender(address);
     return this;
   }
-  /**
-   *
-   * The number of blocks after the checkpoint for which a transaction is valid. If zero, the transaction is immortal.
-   *
-   * @param {number | undefined} maxDuration
-   * @returns {TransactionBuilder} This transaction builder.
-   *
-   * @see https://wiki.polkadot.network/docs/build-transaction-construction
-   */
-  durationConfig({ maxDuration }: { maxDuration: number | undefined }): this {
-    if (maxDuration !== undefined) {
-      this.validateValue(new BigNumber(maxDuration));
-      this._eraPeriod = maxDuration;
-    }
-    return this;
-  }
+
   /**
    *
    * The nonce for this transaction.
@@ -95,11 +80,10 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
    *
    * @see https://wiki.polkadot.network/docs/build-transaction-construction
    */
-  tip(tip: number | undefined): this {
-    if (tip !== undefined) {
-      this.validateValue(new BigNumber(tip));
-    }
-    this._tip = tip;
+  fee(fee: FeeOptions): this {
+    const tip = new BigNumber(fee.amount);
+    this.validateValue(tip);
+    this._tip = tip.toNumber();
     return this;
   }
 
@@ -112,9 +96,15 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
    *
    * @see https://wiki.polkadot.network/docs/build-transaction-construction
    */
-  validity({ firstValid }: Validity): this {
-    this.validateValue(new BigNumber(firstValid));
-    this._blockNumber = firstValid;
+  validity({ firstValid, maxDuration }: validityWindow): this {
+    if (firstValid) {
+      this.validateValue(new BigNumber(firstValid));
+      this._blockNumber = firstValid;
+    }
+    if (maxDuration) {
+      this.validateValue(new BigNumber(maxDuration));
+      this._eraPeriod = maxDuration;
+    }
     return this;
   }
   /**
@@ -323,13 +313,15 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
       });
       this.sender({ address: keypair.getAddress() });
     }
-    this.durationConfig({ maxDuration: decodedTxn.eraPeriod });
+    this.validity({ maxDuration: decodedTxn.eraPeriod });
     this.sequenceId({
       name: 'Nonce',
       keyword: 'nonce',
       value: decodedTxn.nonce,
     });
-    this.tip(decodedTxn.tip);
+    if (decodedTxn.tip) {
+      this.fee({ amount: `${decodedTxn.tip}`, type: 'tip' });
+    }
     this.method(decodedTxn.method as unknown as TxMethod);
     return this._transaction;
   }

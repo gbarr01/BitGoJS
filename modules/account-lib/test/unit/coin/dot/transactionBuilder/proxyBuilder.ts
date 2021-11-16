@@ -34,12 +34,11 @@ describe('Dot Proxy Builder', () => {
         .forceProxyType('Any')
         .call(DotResources.rawTx.proxy.transferCall)
         .sender({ address: sender.address })
-        .validity({ firstValid: 3933 })
+        .validity({ firstValid: 3933, maxDuration: 64 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .sequenceId({ name: 'Nonce', keyword: 'nonce', value: 200 })
-        .tip(0)
-        .transactionVersion(7)
-        .durationConfig({ maxDuration: 64 });
+        .fee({ amount: 0, type: 'tip' })
+        .transactionVersion(7);
       builder.sign({ key: sender.secretKey });
       const tx = await builder.build();
       const txJson = tx.toJson();
@@ -65,12 +64,11 @@ describe('Dot Proxy Builder', () => {
         .forceProxyType('Any')
         .call(DotResources.rawTx.proxy.transferCall)
         .sender({ address: sender.address })
-        .validity({ firstValid: 3933 })
+        .validity({ firstValid: 3933, maxDuration: 64 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .sequenceId({ name: 'Nonce', keyword: 'nonce', value: 200 })
-        .tip(0)
-        .transactionVersion(7)
-        .durationConfig({ maxDuration: 64 });
+        .fee({ amount: 0, type: 'tip' })
+        .transactionVersion(7);
       const tx = await builder.build();
       const txJson = tx.toJson();
       should.deepEqual(txJson.real, real.address);
@@ -91,7 +89,7 @@ describe('Dot Proxy Builder', () => {
     it('should build from raw signed tx', async () => {
       builder.testnet().from(DotResources.rawTx.proxy.signed);
       builder
-        .validity({ firstValid: 3933 })
+        .validity({ firstValid: 3933, maxDuration: 64 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .transactionVersion(7);
       const tx = await builder.build();
@@ -114,7 +112,7 @@ describe('Dot Proxy Builder', () => {
     it('should build from raw unsigned tx', async () => {
       builder.testnet().from(DotResources.rawTx.proxy.unsigned);
       builder
-        .validity({ firstValid: 3933 })
+        .validity({ firstValid: 3933, maxDuration: 64 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .sender({ address: sender.address })
         .sign({ key: sender.secretKey });

@@ -21,14 +21,6 @@ export enum MethodNames {
 }
 
 /**
- * Block validity interface based on the BitgoJS standard doc.
- */
-export interface Validity {
-  firstValid: number;
-  lastValid?: number;
-}
-
-/**
  * The transaction data returned from the toJson() function of a transaction
  */
 export interface TxData {
@@ -169,3 +161,21 @@ export interface sequenceId {
   keyword: string; // "nonce", "sequenceId", "counter"
   value: string | number;
 }
+
+/**
+ * Block validity interface based on the BitgoJS standard doc.
+ */
+export interface validityWindow {
+  firstValid?: number;
+  lastValid?: number;
+  minDuration?: number;
+  maxDuration?: number;
+  unit?: 'block' | 'seconds' | 'milliseconds';
+}
+
+export type FeeOptions = {
+  amount: number | string;
+  unit?: ['baseUnit', 'cpu', 'ram'];
+  formula?: ['fixed', 'feeRate', 'perKB', 'custom'];
+  type?: 'base' | 'max' | 'tip';
+};
