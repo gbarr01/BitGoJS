@@ -25,6 +25,7 @@ export enum CoinFamily {
   CELO = 'celo',
   CSPR = 'cspr',
   DASH = 'dash',
+  DOT = 'dot',
   ETH = 'eth',
   ETH2 = 'eth2',
   ETC = 'etc',
@@ -33,6 +34,7 @@ export enum CoinFamily {
   LTC = 'ltc',
   OFC = 'ofc',
   RBTC = 'rbtc',
+  SOL = 'sol',
   STX = 'stx',
   SUSD = 'susd',
   TRX = 'trx',
@@ -146,6 +148,7 @@ export enum UnderlyingAsset {
   BTC = 'btc',
   BTG = 'btg',
   DASH = 'dash',
+  DOT = 'dot',
   CELO = 'celo', // Celo main coin
   CSPR = 'cspr',
   USD = 'usd',
@@ -157,6 +160,7 @@ export enum UnderlyingAsset {
   HBAR = 'hbar', // Hedera main coin
   LTC = 'ltc',
   RBTC = 'rbtc', // RSK main coin
+  SOL = 'sol',
   STX = 'stx',
   TRX = 'trx',
   XRP = 'xrp',
@@ -245,6 +249,7 @@ export enum UnderlyingAsset {
   CDAI = 'cdai',
   CDT = 'cdt',
   CEL = 'cel',
+  CELR = 'celr',
   CFX = 'cfx',
   CETH = 'ceth',
   CHFX = 'chfx',
@@ -361,6 +366,17 @@ export enum UnderlyingAsset {
   GOLD = 'gold',
   GOT = 'got',
   GRT = 'grt',
+  GTAAVE18DP = 'gtaave18dp',
+  GTBAT18DP = 'gtbat18dp',
+  GTCOMP18DP = 'gtcomp18dp',
+  GTGRT18DP = 'gtgrt18dp',
+  GTLINK18DP = 'gtlink18dp',
+  GTMKR18DP = 'gtmkr18dp',
+  GTSNX18DP = 'gtsnx18dp',
+  GTUNI18DP = 'gtuni18dp',
+  GTUSDT6DP = 'gtusdt6dp',
+  GTYFI18DP = 'gtyfi18dp',
+  GTWBTC8DP = 'gtwbtc8dp',
   GTO = 'gto',
   GTERC2DP = 'gterc2dp',
   GTERC6DP = 'gterc6dp',
@@ -545,6 +561,7 @@ export enum UnderlyingAsset {
   SGR = 'sgr',
   SHK = 'shk',
   SHOPX = 'shopx',
+  SHIB = 'shib',
   SHR = 'shr',
   SIH = 'sih',
   SILV = 'silv',
@@ -612,6 +629,7 @@ export enum UnderlyingAsset {
   UQC = 'uqc',
   URHD = 'urhd',
   USDC = 'usdc',
+  // Also available on EOS
   USDT = 'usdt',
   USDX = 'usdx',
   USG = 'usg',
@@ -696,10 +714,9 @@ export enum UnderlyingAsset {
   'talgo:180447' = 'talgo:180447',
 
   // EOS tokens
-  CHEX = 'CHEX',
-  IQ = 'IQ',
-  EOS_BOX = 'BOX',
-  EOS_USDT = 'USDT',
+  CHEX = 'chex',
+  IQ = 'iq',
+  EOS_BOX = 'eos:box',
 }
 
 /**

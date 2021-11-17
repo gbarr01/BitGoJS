@@ -103,7 +103,11 @@ export interface SupplementGenerateWalletOptions {
   n: number;
   enterprise?: string;
   disableTransactionNotifications?: boolean;
-  gasPrice?: number;
+  gasPrice?: number | string;
+  eip1559?: {
+    maxFeePerGas: number | string;
+    maxPriorityFeePerGas?: number | string;
+  };
   walletVersion?: number;
   keys: string[];
   isCold: boolean;
@@ -167,6 +171,7 @@ export interface KeychainsTriplet {
 export interface TransactionPrebuild {
   txBase64?: string;
   txHex?: string;
+  txInfo?: unknown;
   wallet?: Wallet;
   buildParams?: any;
   consolidateId?: string;
@@ -357,8 +362,9 @@ export abstract class BaseCoin {
   /**
    * convert address into desired address format.
    * @param address
+   * @param format
    */
-  canonicalAddress(address: string): string {
+  canonicalAddress(address: string, format?: unknown): string {
     return address;
   }
 

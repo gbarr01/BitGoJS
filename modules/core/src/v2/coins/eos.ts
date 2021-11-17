@@ -26,6 +26,7 @@ import * as querystring from 'querystring';
 import * as _ from 'lodash';
 import * as Bluebird from 'bluebird';
 import { OfflineAbiProvider } from './eosutil/eosabiprovider';
+import { StringTextDecoder } from '../../stringTextDecoder';
 const co = Bluebird.coroutine;
 import { InvalidAddressError, UnexpectedAddressError } from '../../errors';
 import { Environments } from '../environments';
@@ -335,7 +336,7 @@ export class Eos extends BaseCoin {
     if (destinationDetails.pathname === address) {
       return {
         address: address,
-        memoId: '',
+        memoId: undefined,
       };
     }
 
@@ -541,7 +542,8 @@ export class Eos extends BaseCoin {
         rpc: new NoopJsonRpc(),
         signatureProvider: new NoopSignatureProvider(),
         chainId: self.getChainId(),
-        textDecoder: new TextDecoder(),
+        // Use a custom TextDecoder as the global TextDecoder leads to crashes in OVC / Electron.
+        textDecoder: new StringTextDecoder(),
         textEncoder: new TextEncoder(),
       });
 
@@ -579,6 +581,7 @@ export class Eos extends BaseCoin {
       // deserializeTransaction
       const serializedTxBuffer = Buffer.from(transaction.packed_trx, 'hex');
       const deserializedTxJsonFromPackedTrx = yield api.deserializeTransactionWithActions(serializedTxBuffer);
+
       if (!deserializedTxJsonFromPackedTrx) {
         throw new Error('could not process transaction from txHex');
       }
@@ -703,15 +706,16 @@ export class Eos extends BaseCoin {
         tx.address = deserializedUnstakeAction.address;
       } else if (txAction.name === 'refund') {
         if (tx.actions.length !== 1) {
-          throw new Error(`unstake should only have 1 action: ${tx.actions.length} given`);
+          throw new Error(`refund should only have 1 action: ${tx.actions.length} given`);
         }
 
         if (!isRefundActionData(txAction.data)) {
-          throw new Error('Invalid or incomplete unstake action data');
+          throw new Error('Invalid or incomplete refund action data');
         }
 
         const refundActionData = txAction.data;
         tx.address = refundActionData.owner;
+        tx.amount = '0';
       } else {
         throw new Error(`invalid action: ${txAction.name}`);
       }
@@ -1168,8 +1172,11 @@ export class Eos extends BaseCoin {
         if (txHexTransferAction.to !== expectedOutputAddressAndMemoId.address) {
           throw new Error('txHex receive address does not match expected recipient address');
         }
-        if (txHexTransferAction.memo !== expectedOutputAddressAndMemoId.memoId) {
-          throw new Error('txHex receive memoId does not match expected recipient memoId');
+        // check if txaction memoid is equal to address memo id only if address also has memoid present
+        if (!_.isUndefined(expectedOutputAddressAndMemoId.memoId)) {
+          if (txHexTransferAction.memo !== expectedOutputAddressAndMemoId.memoId) {
+            throw new Error('txHex receive memoId does not match expected recipient memoId');
+          }
         }
 
         // check amount and coin

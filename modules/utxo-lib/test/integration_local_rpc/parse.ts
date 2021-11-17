@@ -8,21 +8,30 @@ import {
   parseSignatureScript,
   parseSignatureScript2Of3,
   ParsedSignatureScript2Of3,
+  signInput2Of3,
 } from '../../src/bitgo/signature';
 
 import {
   createSpendTransactionFromPrevOutputs,
+  getDefaultCosigner,
   isSupportedDepositType,
   isSupportedSpendType,
   ScriptType,
   scriptTypes,
+  TxOutPoint,
 } from './generate/outputScripts.util';
 import { fixtureKeys, readFixture, TransactionFixtureWithInputs } from './generate/fixtures';
-import { isScriptType2Of3 } from '../../src/bitgo/outputScripts';
+import { isScriptType2Of3, ScriptType2Of3 } from '../../src/bitgo/outputScripts';
 import { parseTransactionRoundTrip } from '../transaction_util';
 import { normalizeParsedTransaction, normalizeRpcTransaction } from './compare';
 import { UtxoTransaction } from '../../src/bitgo/UtxoTransaction';
-import { createTransactionFromBuffer } from '../../src/bitgo';
+import {
+  createTransactionBuilderForNetwork,
+  createTransactionBuilderFromTransaction,
+  createTransactionFromBuffer,
+} from '../../src/bitgo';
+import { Triple } from '../../src/bitgo/types';
+import { TxOutput } from 'bitcoinjs-lib';
 
 const utxolib = require('../../src');
 
@@ -52,7 +61,9 @@ function runTestParse(network: Network, txType: FixtureTxType, scriptType: Scrip
       parsedTx = createTransactionFromBuffer(Buffer.from(fixture.transaction.hex, 'hex'), network);
     });
 
-    function getPrevOutputValue(input: { txid?: string; hash?: Buffer; index: number }) {
+    type InputLookup = { txid?: string; hash?: Buffer; index: number };
+
+    function getPrevOutput(input: InputLookup) {
       if (input.hash) {
         input = {
           ...input,
@@ -68,15 +79,61 @@ function runTestParse(network: Network, txType: FixtureTxType, scriptType: Scrip
       if (!prevOutput) {
         throw new Error(`could not prevOutput`);
       }
-      return prevOutput.value * 1e8;
+      return prevOutput;
     }
 
-    function getPrevOutputs(): [txid: string, index: number, value: number][] {
-      return parsedTx.ins.map((i) => [getTxidFromHash(i.hash), i.index, getPrevOutputValue(i)]);
+    function getPrevOutputValue(input: InputLookup) {
+      return getPrevOutput(input).value * 1e8;
+    }
+
+    function getPrevOutputScript(input: InputLookup): Buffer {
+      return Buffer.from(getPrevOutput(input).scriptPubKey.hex, 'hex');
+    }
+
+    function getPrevOutputs(): (TxOutPoint & TxOutput)[] {
+      return parsedTx.ins.map((i) => ({
+        txid: getTxidFromHash(i.hash),
+        index: i.index,
+        script: getPrevOutputScript(i),
+        value: getPrevOutputValue(i),
+      }));
     }
 
     it(`round-trip`, function () {
       parseTransactionRoundTrip(Buffer.from(fixture.transaction.hex, 'hex'), network, getPrevOutputs());
+    });
+
+    it(`recreate from unsigned hex`, function () {
+      if (txType === 'deposit') {
+        return;
+      }
+      const txbUnsigned = createTransactionBuilderForNetwork(network);
+      getPrevOutputs().forEach((o) => {
+        txbUnsigned.addInput(o.txid, o.index);
+      });
+      fixture.transaction.vout.forEach((o) => {
+        txbUnsigned.addOutput(Buffer.from(o.scriptPubKey.hex, 'hex'), o.value * 1e8);
+      });
+
+      const tx = createTransactionFromBuffer(txbUnsigned.buildIncomplete().toBuffer(), network);
+      const txb = createTransactionBuilderFromTransaction(tx, getPrevOutputs());
+      const signKeys = [fixtureKeys[0], fixtureKeys[2]];
+      const publicKeys = fixtureKeys.map((k) => k.publicKey) as Triple<Buffer>;
+      getPrevOutputs().forEach(({ value }, vin) => {
+        signKeys.forEach((key) => {
+          signInput2Of3(
+            txb,
+            vin,
+            scriptType as ScriptType2Of3,
+            publicKeys,
+            key,
+            getDefaultCosigner(publicKeys, key.publicKey),
+            value
+          );
+        });
+      });
+
+      assert.strictEqual(txb.build().toBuffer().toString('hex'), fixture.transaction.hex);
     });
 
     it('compare against RPC data', function () {
@@ -95,7 +152,7 @@ function runTestParse(network: Network, txType: FixtureTxType, scriptType: Scrip
         const result = parseSignatureScript(input) as ParsedSignatureScript2Of3;
 
         assert.strict(result.publicKeys !== undefined);
-        assert.strictEqual(result.publicKeys.length, 3);
+        assert.strictEqual(result.publicKeys.length, scriptType === 'p2tr' ? 2 : 3);
 
         switch (scriptType) {
           case 'p2sh':
@@ -104,6 +161,9 @@ function runTestParse(network: Network, txType: FixtureTxType, scriptType: Scrip
             break;
           case 'p2wsh':
             assert.strictEqual(result.inputClassification, 'witnessscripthash');
+            break;
+          case 'p2tr':
+            assert.strictEqual(result.inputClassification, 'taproot');
             break;
           default:
             throw new Error(`unknown scriptType ${scriptType}`);
@@ -122,14 +182,19 @@ function runTestParse(network: Network, txType: FixtureTxType, scriptType: Scrip
         if (!publicKeys) {
           throw new Error(`expected publicKeys`);
         }
-        assert.strictEqual(publicKeys.length, 3);
+        assert.strictEqual(publicKeys.length, scriptType === 'p2tr' ? 2 : 3);
+
+        if (scriptType === 'p2tr') {
+          // TODO implement verifySignature for p2tr
+          this.skip();
+        }
 
         publicKeys.forEach((publicKey, publicKeyIndex) => {
           assert.strictEqual(
             verifySignature(parsedTx, i, prevOutValue, {
               publicKey,
             }),
-            publicKeyIndex === 0 || publicKeyIndex === 1
+            publicKeyIndex === 0 || publicKeyIndex === 2
           );
         });
 
@@ -154,8 +219,12 @@ function runTestParse(network: Network, txType: FixtureTxType, scriptType: Scrip
     it(`verifySignatures with one or two signatures`, function () {
       fixtureKeys.forEach((key1) => {
         const rebuiltTx = getRebuiltTransaction([key1]);
+        const prevOutputs = rebuiltTx.ins.map((v) => ({
+          script: getPrevOutputScript(v),
+          value: getPrevOutputValue(v),
+        }));
         rebuiltTx.ins.forEach((input, i) => {
-          assert.strict(verifySignature(rebuiltTx, i, getPrevOutputValue(input)));
+          assert.strict(verifySignature(rebuiltTx, i, getPrevOutputValue(input), {}, prevOutputs));
         });
 
         fixtureKeys.forEach((key2) => {
@@ -163,9 +232,16 @@ function runTestParse(network: Network, txType: FixtureTxType, scriptType: Scrip
             return;
           }
 
+          if (scriptType === 'p2tr') {
+            const keypair = [fixtureKeys[0], fixtureKeys[2]];
+            if (!keypair.includes(key1) || !keypair.includes(key2)) {
+              return;
+            }
+          }
+
           const rebuiltTx = getRebuiltTransaction([key1, key2]);
           rebuiltTx.ins.forEach((input, i) => {
-            assert.strict(verifySignature(rebuiltTx, i, getPrevOutputValue(input)));
+            assert.strict(verifySignature(rebuiltTx, i, getPrevOutputValue(input), {}, prevOutputs));
           });
         });
       });

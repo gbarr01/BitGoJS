@@ -1,19 +1,13 @@
 import * as bip32 from 'bip32';
 import * as crypto from 'crypto';
 import { Network } from '../../../src/networkTypes';
-import {
-  createOutputScript2of3,
-  ScriptType2Of3,
-  scriptType2Of3AsPrevOutType,
-  scriptTypes2Of3,
-} from '../../../src/bitgo/outputScripts';
-import { Triple } from '../../../src/bitgo/types';
+import { createOutputScript2of3, ScriptType2Of3, scriptTypes2Of3 } from '../../../src/bitgo/outputScripts';
+import { isTriple, Triple } from '../../../src/bitgo/types';
 import { isBitcoin, isBitcoinGold, isLitecoin } from '../../../src/coins';
 
-import { Transaction } from 'bitcoinjs-lib';
-import { createTransactionBuilderForNetwork, createTransactionFromBuffer, getDefaultSigHash } from '../../../src/bitgo';
+import { Transaction, TxOutput } from 'bitcoinjs-lib';
+import { createTransactionBuilderForNetwork, createTransactionFromBuffer, signInput2Of3 } from '../../../src/bitgo';
 import { UtxoTransaction } from '../../../src/bitgo/UtxoTransaction';
-import { Output } from 'bitcoinjs-lib/types/transaction';
 
 const utxolib = require('../../../src');
 
@@ -37,6 +31,20 @@ export function getKeyTriple(seed: string): KeyTriple {
   return [getKey(seed + '.0'), getKey(seed + '.1'), getKey(seed + '.2')];
 }
 
+export function getDefaultCosigner(pubkeys: Triple<Buffer>, signer: Buffer): Buffer {
+  const [user, backup, bitgo] = pubkeys;
+  if (signer.equals(user)) {
+    return bitgo;
+  }
+  if (signer.equals(backup)) {
+    return bitgo;
+  }
+  if (signer.equals(bitgo)) {
+    return user;
+  }
+  throw new Error(`signer not in pubkeys`);
+}
+
 export function supportsSegwit(network: Network): boolean {
   return isBitcoin(network) || isLitecoin(network) || isBitcoinGold(network);
 }
@@ -51,10 +59,6 @@ export function isSupportedDepositType(network: Network, scriptType: ScriptType)
 }
 
 export function isSupportedSpendType(network: Network, scriptType: ScriptType): boolean {
-  // TODO: enable this when p2tr signing is implemented
-  if (scriptType === 'p2tr') {
-    return false;
-  }
   if (!scriptTypes2Of3.includes(scriptType as ScriptType2Of3)) {
     return false;
   }
@@ -91,10 +95,10 @@ export function createScriptPubKey(keys: KeyTriple, scriptType: ScriptType, netw
 export function createSpendTransactionFromPrevOutputs<T extends UtxoTransaction>(
   keys: KeyTriple,
   scriptType: ScriptType2Of3,
-  prevOutputs: [txid: string, index: number, value: number][],
+  prevOutputs: (TxOutPoint & TxOutput)[],
   recipientScript: Buffer,
   network: Network,
-  { signKeys = keys.slice(0, 2) } = {}
+  { signKeys = [keys[0], keys[2]] } = {}
 ): T {
   if (signKeys.length !== 1 && signKeys.length !== 2) {
     throw new Error(`signKeys length must be 1 or 2`);
@@ -102,31 +106,23 @@ export function createSpendTransactionFromPrevOutputs<T extends UtxoTransaction>
 
   const txBuilder = createTransactionBuilderForNetwork(network);
 
-  prevOutputs.forEach(([txid, vout]) => {
-    txBuilder.addInput(txid, vout);
+  prevOutputs.forEach(({ txid, index, script, value }, i) => {
+    txBuilder.addInput(txid, index, undefined, script, value);
   });
 
-  const inputSum = prevOutputs.reduce((sum, [, , value]) => sum + value, 0);
+  const inputSum = prevOutputs.reduce((sum, { value }) => sum + value, 0);
   const fee = 1000;
 
   txBuilder.addOutput(recipientScript, inputSum - fee);
 
-  const { redeemScript, witnessScript } = createOutputScript2of3(
-    keys.map((k) => k.publicKey),
-    scriptType
-  );
+  const publicKeys = keys.map((k) => k.publicKey);
+  if (!isTriple(publicKeys)) {
+    throw new Error();
+  }
 
-  prevOutputs.forEach(([, , value], vin) => {
+  prevOutputs.forEach(({ value }, vin) => {
     signKeys.forEach((key) => {
-      txBuilder.sign({
-        prevOutScriptType: scriptType2Of3AsPrevOutType(scriptType),
-        vin,
-        keyPair: Object.assign(key, { network: null }),
-        redeemScript,
-        hashType: getDefaultSigHash(network),
-        witnessValue: value,
-        witnessScript,
-      });
+      signInput2Of3(txBuilder, vin, scriptType, publicKeys, key, getDefaultCosigner(publicKeys, key.publicKey), value);
     });
   });
 
@@ -136,35 +132,46 @@ export function createSpendTransactionFromPrevOutputs<T extends UtxoTransaction>
   return txBuilder.build() as T;
 }
 
+export type TxOutPoint = {
+  txid: string;
+  index: number;
+};
+
 export function createSpendTransaction(
   keys: KeyTriple,
   scriptType: ScriptType2Of3,
-  inputTxid: string,
-  inputTxBuffer: Buffer,
+  inputTxs: Buffer[],
   recipientScript: Buffer,
   network: Network
 ): Transaction {
-  const inputTx = createTransactionFromBuffer(inputTxBuffer, network);
-  if (inputTx.getId() !== inputTxid) {
-    throw new Error(`txid mismatch ${inputTx.getId()} ${inputTxid}`);
-  }
+  const matches: (TxOutPoint & TxOutput)[] = inputTxs
+    .map((inputTxBuffer): (TxOutPoint & TxOutput)[] => {
+      const inputTx = createTransactionFromBuffer(inputTxBuffer, network);
 
-  const { scriptPubKey } = createOutputScript2of3(
-    keys.map((k) => k.publicKey),
-    scriptType as ScriptType2Of3
-  );
-  const matches = inputTx.outs
-    .map((o, vout): [Output, number] => [o, vout])
-    .filter(([o]) => scriptPubKey.equals(o.script));
+      const { scriptPubKey } = createOutputScript2of3(
+        keys.map((k) => k.publicKey),
+        scriptType as ScriptType2Of3
+      );
+
+      return inputTx.outs
+        .map((o, vout): (TxOutPoint & TxOutput) | undefined => {
+          if (!scriptPubKey.equals(o.script)) {
+            return;
+          }
+          return {
+            txid: inputTx.getId(),
+            index: vout,
+            value: o.value,
+            script: o.script,
+          };
+        })
+        .filter((v): v is TxOutPoint & TxOutput => v !== undefined);
+    })
+    .reduce((all, matches) => [...all, ...matches]);
+
   if (!matches.length) {
     throw new Error(`could not find matching outputs in funding transaction`);
   }
 
-  return createSpendTransactionFromPrevOutputs(
-    keys,
-    scriptType,
-    matches.map(([output, index]) => [inputTxid, index, output.value]),
-    recipientScript,
-    network
-  );
+  return createSpendTransactionFromPrevOutputs(keys, scriptType, matches, recipientScript, network);
 }

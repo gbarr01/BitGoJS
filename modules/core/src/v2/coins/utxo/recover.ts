@@ -13,6 +13,8 @@ import { getKrsProvider, getBip32Keys, getIsKrsRecovery, getIsUnsignedSweep } fr
 import { sanitizeLegacyPath } from '../../../bip32path';
 import { AbstractUtxoCoin, AddressInfo, Output, UnspentInfo } from '../abstractUtxoCoin';
 
+import ScriptType2Of3 = utxolib.bitgo.outputScripts.ScriptType2Of3;
+
 interface SignatureAddressInfo extends AddressInfo {
   backupKey: bip32.BIP32Interface;
   userKey: bip32.BIP32Interface;
@@ -123,7 +125,7 @@ async function queryBlockchainUnspentsPath(
 
     const chain = Number(basePath.split('/').pop()); // extracts the chain from the basePath
     const keys = derivedKeys.map((k) => k.publicKey);
-    const address: any = coin.createMultiSigAddress(Codes.typeForCode(chain), 2, keys);
+    const address: any = coin.createMultiSigAddress(Codes.typeForCode(chain) as ScriptType2Of3, 2, keys);
 
     const addrInfo: AddressInfo = await coin.getAddressInfoFromExplorer(address.address, params.apiKey);
     // we use txCount here because it implies usage - having tx'es means the addr was generated and used
@@ -232,12 +234,17 @@ export async function recover(coin: AbstractUtxoCoin, bitgo: BitGo, params: Reco
     // internal indices
     if (!_.includes(params.ignoreAddressTypes, addressType)) {
       if (addressType === Codes.UnspentTypeTcomb('p2shP2wsh') && !coin.supportsP2shP2wsh()) {
-        // P2shP2wsh is not supported. Skip.
+        // P2shP2wsh is not supported for this coin so we skip this unspent type.
         return;
       }
 
       if (addressType === Codes.UnspentTypeTcomb('p2wsh') && !coin.supportsP2wsh()) {
-        // P2wsh is not supported. Skip.
+        // P2wsh is not supported for this coin so we skip this unspent type.
+        return;
+      }
+
+      if (addressType === Codes.UnspentTypeTcomb('p2tr') && !coin.supportsP2tr()) {
+        // P2tr is not supported for this coin so we skip this unspent type.
         return;
       }
 

@@ -53,6 +53,9 @@ import { sanitizeLegacyPath } from '../../bip32path';
 const debug = debugLib('bitgo:v2:utxo');
 const co = Bluebird.coroutine;
 
+import ScriptType2Of3 = utxolib.bitgo.outputScripts.ScriptType2Of3;
+import { getReplayProtectionAddresses } from './utxo/replayProtection';
+
 export interface VerifyAddressOptions extends BaseVerifyAddressOptions {
   chain: number;
   index: number;
@@ -84,10 +87,23 @@ export interface TransactionExplanation {
   signatures: number | false;
 }
 
-export interface Unspent {
+export interface WalletUnspent {
   id: string;
+  address: string;
+  value: number;
+  index: number;
+  chain: number;
+  redeemScript?: string;
+  witnessScript?: string;
+}
+
+export interface ReplayProtectionUnspent {
+  id: string;
+  address: string;
   value: number;
 }
+
+export type Unspent = WalletUnspent | ReplayProtectionUnspent;
 
 export interface ExplainTransactionOptions {
   txHex: string;
@@ -147,14 +163,14 @@ export interface ParsedTransaction extends BaseParsedTransaction {
 }
 
 export interface GenerateAddressOptions {
-  addressType?: string;
+  addressType?: ScriptType2Of3;
   keychains: {
     pub: string;
     aspKeyId?: string;
   }[];
-  threshold: number;
+  threshold?: number;
   chain?: number;
-  index: number;
+  index?: number;
   segwit?: boolean;
   bech32?: boolean;
 }
@@ -173,16 +189,21 @@ export interface SignTransactionOptions extends BaseSignTransactionOptions {
     txHex: string;
     txInfo: {
       unspents: {
+        id: string;
         chain?: number;
         index?: number;
-        value?: number;
-        address?: string;
+        value: number;
+        address: string;
         redeemScript?: string;
         witnessScript?: string;
       }[];
     };
   };
   prv: string;
+  userKeychain?: Keychain;
+  backupKeychain?: Keychain;
+  bitgoKeychain?: Keychain;
+  taprootRedeemIndex?: number;
   isLastSignature?: boolean;
 }
 
@@ -452,18 +473,21 @@ export abstract class AbstractUtxoCoin extends BaseCoin {
    * Determine an address' type based on its witness and redeem script presence
    * @param addressDetails
    */
-  static inferAddressType(addressDetails: { coinSpecific: AddressCoinSpecific }): string | null {
-    if (_.isObject(addressDetails.coinSpecific)) {
-      if (
-        _.isString(addressDetails.coinSpecific.redeemScript) &&
-        _.isString(addressDetails.coinSpecific.witnessScript)
-      ) {
-        return Codes.UnspentTypeTcomb('p2shP2wsh');
-      } else if (_.isString(addressDetails.coinSpecific.redeemScript)) {
-        return Codes.UnspentTypeTcomb('p2sh');
-      } else if (_.isString(addressDetails.coinSpecific.witnessScript)) {
-        return Codes.UnspentTypeTcomb('p2wsh');
-      }
+  static inferAddressType(addressDetails: { coinSpecific: AddressCoinSpecific; chain: number }): ScriptType2Of3 | null {
+    const { witnessScript, redeemScript } = addressDetails.coinSpecific ?? {};
+    if (_.isString(redeemScript) && _.isString(witnessScript)) {
+      return 'p2shP2wsh';
+    } else if (_.isString(redeemScript)) {
+      return 'p2sh';
+    } else if (_.isString(witnessScript)) {
+      return 'p2wsh';
+    } else if (
+      _.isUndefined(redeemScript) &&
+      _.isUndefined(witnessScript) &&
+      _.isNumber(addressDetails.chain) &&
+      Codes.isP2tr(addressDetails.chain)
+    ) {
+      return 'p2tr';
     }
     return null;
   }
@@ -966,7 +990,7 @@ export abstract class AbstractUtxoCoin extends BaseCoin {
     }
 
     const expectedAddress = this.generateAddress({
-      addressType,
+      addressType: addressType as ScriptType2Of3,
       keychains,
       threshold: 2,
       chain,
@@ -1007,6 +1031,32 @@ export abstract class AbstractUtxoCoin extends BaseCoin {
   }
 
   /**
+   * Indicates whether a coin supports segwit v1 taproot outputs
+   * @returns {boolean}
+   */
+  supportsP2tr() {
+    return false;
+  }
+
+  supportsAddressType(addressType: ScriptType2Of3): boolean {
+    switch (addressType) {
+      case 'p2sh':
+        return true;
+      case 'p2shP2wsh':
+        return this.supportsP2shP2wsh();
+      case 'p2wsh':
+        return this.supportsP2wsh();
+      case 'p2tr':
+        return this.supportsP2tr();
+    }
+    throw new errors.UnsupportedAddressTypeError();
+  }
+
+  supportsAddressChain(chain: number) {
+    return this.supportsAddressType(utxolib.bitgo.outputScripts.scriptTypeForChain(chain));
+  }
+
+  /**
    * TODO(BG-11487): Remove addressType, segwit, and bech32 params in SDKv6
    * Generate an address for a wallet based on a set of configurations
    * @param params.addressType {string}   Deprecated
@@ -1026,49 +1076,43 @@ export abstract class AbstractUtxoCoin extends BaseCoin {
       derivationChain = chain;
     }
 
-    function convertFlagsToAddressType(): string {
+    function convertFlagsToAddressType(): ScriptType2Of3 {
+      if (_.isInteger(chain)) {
+        return utxolib.bitgo.outputScripts.scriptTypeForChain(chain as number);
+      }
       if (_.isBoolean(segwit) && segwit) {
-        return Codes.UnspentTypeTcomb('p2shP2wsh');
+        return 'p2shP2wsh';
       } else if (_.isBoolean(bech32) && bech32) {
-        return Codes.UnspentTypeTcomb('p2wsh');
+        return 'p2wsh';
       } else {
-        return Codes.UnspentTypeTcomb('p2sh');
+        return 'p2sh';
       }
     }
 
     const addressType = params.addressType || convertFlagsToAddressType();
 
-    switch (addressType) {
-      case Codes.UnspentTypeTcomb('p2sh'):
-        if (!Codes.isP2sh(derivationChain)) {
-          throw new errors.AddressTypeChainMismatchError(addressType, derivationChain);
-        }
-        break;
-      case Codes.UnspentTypeTcomb('p2shP2wsh'):
-        if (!this.supportsP2shP2wsh()) {
+    if (addressType !== utxolib.bitgo.outputScripts.scriptTypeForChain(derivationChain)) {
+      throw new errors.AddressTypeChainMismatchError(addressType, derivationChain);
+    }
+
+    if (!this.supportsAddressType(addressType)) {
+      switch (addressType) {
+        case 'p2sh':
+          throw new Error(`internal error: p2sh should always be supported`);
+        case 'p2shP2wsh':
           throw new errors.P2shP2wshUnsupportedError();
-        }
-
-        if (!Codes.isP2shP2wsh(derivationChain)) {
-          throw new errors.AddressTypeChainMismatchError(addressType, derivationChain);
-        }
-        break;
-      case Codes.UnspentTypeTcomb('p2wsh'):
-        if (!this.supportsP2wsh()) {
+        case 'p2wsh':
           throw new errors.P2wshUnsupportedError();
-        }
-
-        if (!Codes.isP2wsh(derivationChain)) {
-          throw new errors.AddressTypeChainMismatchError(addressType, derivationChain);
-        }
-        break;
-      default:
-        throw new errors.UnsupportedAddressTypeError();
+        case 'p2tr':
+          throw new errors.P2trUnsupportedError();
+        default:
+          throw new errors.UnsupportedAddressTypeError();
+      }
     }
 
     let signatureThreshold = 2;
     if (_.isInteger(threshold)) {
-      signatureThreshold = threshold;
+      signatureThreshold = threshold as number;
       if (signatureThreshold <= 0) {
         throw new Error('threshold has to be positive');
       }
@@ -1078,8 +1122,8 @@ export abstract class AbstractUtxoCoin extends BaseCoin {
     }
 
     let derivationIndex = 0;
-    if (_.isInteger(index) && index > 0) {
-      derivationIndex = index;
+    if (_.isInteger(index) && (index as number) > 0) {
+      derivationIndex = index as number;
     }
 
     const path = '0/0/' + derivationChain + '/' + derivationIndex;
@@ -1167,23 +1211,33 @@ export abstract class AbstractUtxoCoin extends BaseCoin {
           inputIndex: index,
           unspent: currentUnspent,
           path: '0/0/' + currentUnspent.chain + '/' + currentUnspent.index,
-          isP2wsh: !currentUnspent.redeemScript,
+          chain: currentUnspent.chain,
           isBitGoTaintedUnspent: self.isBitGoTaintedUnspent(currentUnspent),
           error: undefined as Error | undefined,
         };
       };
 
+      const prevOutputs: utxolib.TxOutput[] = []; // prev output scripts used for p2tr signature verification
       const signatureIssues: ReturnType<typeof getSignatureContext>[] = [];
+      const signingData: { signParams?: utxolib.bitgo.TxbSignArg; signatureContext: any }[] = [];
+
       // Sign inputs
       for (let index = 0; index < transaction.ins.length; ++index) {
         debug('Signing input %d of %d', index + 1, transaction.ins.length);
         const signatureContext = getSignatureContext(txPrebuild, index);
+
+        prevOutputs.push({
+          script: utxolib.address.toOutputScript(signatureContext.unspent.address, self.network),
+          value: signatureContext.unspent.value,
+        });
+
         if (signatureContext.isBitGoTaintedUnspent) {
           debug(
             'Skipping input %d of %d (unspent from replay protection address which is platform signed only)',
             index + 1,
             transaction.ins.length
           );
+          signingData.push({ signParams: undefined, signatureContext });
           continue;
         }
 
@@ -1191,24 +1245,107 @@ export abstract class AbstractUtxoCoin extends BaseCoin {
 
         debug('Input details: %O', signatureContext);
 
-        const sigHashType = utxolib.bitgo.getDefaultSigHash(self.network);
-        const redeemScript = signatureContext.unspent.redeemScript
-          ? Buffer.from(signatureContext.unspent.redeemScript, 'hex')
-          : undefined;
-        const witnessScript = signatureContext.unspent.witnessScript
-          ? Buffer.from(signatureContext.unspent.witnessScript, 'hex')
-          : undefined;
-        const scriptType = witnessScript ? (redeemScript ? 'p2shP2wsh' : 'p2wsh') : 'p2sh';
-        debug(`Signing ${scriptType} input`);
-        try {
-          txb.sign(index, keyPair, redeemScript, sigHashType, signatureContext.unspent.value, witnessScript);
-        } catch (e) {
-          debug('Failed to sign input:', e);
-          signatureContext.error = e;
-          signatureIssues.push(signatureContext);
+        const scriptType = utxolib.bitgo.outputScripts.scriptTypeForChain(signatureContext.chain);
+        const sigHashType = utxolib.bitgo.getDefaultSigHash(self.network, scriptType);
+
+        if (Codes.isP2tr(signatureContext.chain)) {
+          // we default to signing for a p2tr-p2ns script path spend using
+          // the bitgo key and user key
+
+          // we need to provide the sign call with the control block and chosen tapscript
+          if (!params.userKeychain || !params.backupKeychain || !params.bitgoKeychain) {
+            throw new Error('missing keychain parameters');
+          }
+
+          // we expect that the first signature will always be with the user key
+          const userPubkey = bip32
+            .fromBase58(params.userKeychain.pub)
+            .derivePath(sanitizeLegacyPath(signatureContext.path)).publicKey;
+          const backupPubkey = bip32
+            .fromBase58(params.backupKeychain.pub)
+            .derivePath(sanitizeLegacyPath(signatureContext.path)).publicKey;
+          const bitgoPubkey = bip32
+            .fromBase58(params.bitgoKeychain.pub)
+            .derivePath(sanitizeLegacyPath(signatureContext.path)).publicKey;
+
+          const { controlBlock, redeem, output } = utxolib.bitgo.outputScripts.createPaymentP2tr(
+            [userPubkey, backupPubkey, bitgoPubkey],
+            params.taprootRedeemIndex ?? 0
+          );
+
+          const derivedAddress = utxolib.address.fromOutputScript(output!, self.network);
+
+          if (derivedAddress !== signatureContext.unspent.address) {
+            throw new Error(`address mismatch: unspent=${signatureContext.unspent.address} derived=${derivedAddress}`);
+          }
+
+          const signParams = {
+            controlBlock,
+            vin: index,
+            prevOutScriptType: 'p2tr-p2ns',
+            keyPair: keyPair,
+            hashType: sigHashType,
+            witnessScript: redeem?.output,
+            witnessValue: signatureContext.unspent.value,
+          };
+
+          signingData.push({ signParams, signatureContext });
+        } else {
+          const redeemScript = signatureContext.unspent.redeemScript
+            ? Buffer.from(signatureContext.unspent.redeemScript, 'hex')
+            : undefined;
+          const witnessScript = signatureContext.unspent.witnessScript
+            ? Buffer.from(signatureContext.unspent.witnessScript, 'hex')
+            : undefined;
+          const scriptType = witnessScript ? (redeemScript ? 'p2shP2wsh' : 'p2wsh') : 'p2sh';
+          debug(`Signing ${scriptType} input`);
+
+          const signParams: utxolib.bitgo.TxbSignArg = {
+            vin: index,
+            keyPair,
+            prevOutScriptType: utxolib.bitgo.outputScripts.scriptType2Of3AsPrevOutType(scriptType),
+            redeemScript,
+            hashType: sigHashType,
+            witnessValue: signatureContext.unspent.value,
+            witnessScript,
+          };
+
+          signingData.push({ signParams, signatureContext });
+        }
+      }
+
+      // this is a hacky workaround needed due to the fact that not all data
+      // is present on the transaction builder when signing is called the first time
+      // on multi-input transactions with p2tr inputs. the first failed signed attempt
+      // will populate the required data. we then attempt signing again for any sign
+      // calls that failed and expect it to succeed the second time
+      const signatureSuccesses: boolean[] = [];
+      for (let index = 0; index < transaction.ins.length; ++index) {
+        const { signParams } = signingData[index];
+        if (signParams === undefined) {
+          debug('Skipping signature for input %d of %d (RP input?)', index + 1, transaction.ins.length);
           continue;
         }
-        debug('Successfully signed input %d of %d', index + 1, transaction.ins.length);
+        try {
+          txb.sign(signParams); // this may fail
+          debug('Successfully signed input %d of %d', index + 1, transaction.ins.length);
+          signatureSuccesses[index] = true;
+        } catch {
+          signatureSuccesses[index] = false;
+        }
+      }
+      for (let index = 0; index < transaction.ins.length; ++index) {
+        try {
+          const { signParams } = signingData[index];
+          if (signatureSuccesses[index] || signParams === undefined) continue; // already signed
+          txb.sign(signParams); // this should work
+          debug('Successfully signed input %d of %d', index + 1, transaction.ins.length);
+        } catch (e) {
+          debug('Failed to sign input:', e);
+          const { signatureContext } = signingData[index];
+          signatureContext.error = e;
+          signatureIssues.push(signatureContext);
+        }
       }
 
       if (isLastSignature) {
@@ -1230,11 +1367,16 @@ export abstract class AbstractUtxoCoin extends BaseCoin {
           continue;
         }
 
-        if (signatureContext.isP2wsh) {
+        if (Codes.isP2wsh(signatureContext.chain)) {
           transaction.setInputScript(index, Buffer.alloc(0));
         }
-
-        const isValidSignature = utxolib.bitgo.verifySignature(transaction, index, signatureContext.unspent.value);
+        const isValidSignature = utxolib.bitgo.verifySignature(
+          transaction,
+          index,
+          signatureContext.unspent.value,
+          undefined,
+          prevOutputs
+        );
         if (!isValidSignature) {
           debug('Invalid signature');
           signatureContext.error = new Error('invalid signature');
@@ -1259,12 +1401,11 @@ export abstract class AbstractUtxoCoin extends BaseCoin {
   }
 
   /**
-   * Always false for coins other than BCH and TBCH.
    * @param unspent
    * @returns {boolean}
    */
   isBitGoTaintedUnspent(unspent: Unspent) {
-    return false;
+    return getReplayProtectionAddresses(this.network).includes(unspent.address);
   }
 
   /**
@@ -1438,7 +1579,7 @@ export abstract class AbstractUtxoCoin extends BaseCoin {
    * @param signatureThreshold
    * @param keys
    */
-  createMultiSigAddress(addressType: string, signatureThreshold: number, keys: Buffer[]): MultiSigAddress {
+  createMultiSigAddress(addressType: ScriptType2Of3, signatureThreshold: number, keys: Buffer[]): MultiSigAddress {
     if (signatureThreshold !== 2) {
       throw new Error(`signatureThreshold must be 2, got ${signatureThreshold}`);
     }
@@ -1449,7 +1590,7 @@ export abstract class AbstractUtxoCoin extends BaseCoin {
       scriptPubKey: outputScript,
       redeemScript,
       witnessScript,
-    } = utxolib.bitgo.outputScripts.createOutputScript2of3(keys, addressType as 'p2sh' | 'p2shP2wsh' | 'p2wsh');
+    } = utxolib.bitgo.outputScripts.createOutputScript2of3(keys, addressType);
 
     return {
       outputScript,

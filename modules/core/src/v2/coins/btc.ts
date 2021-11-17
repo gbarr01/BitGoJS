@@ -8,6 +8,7 @@ import { BitGo } from '../../bitgo';
 import { BlockExplorerUnavailable } from '../../errors';
 import { BaseCoin, VerifyRecoveryTransactionOptions as BaseVerifyRecoveryTransactionOptions } from '../baseCoin';
 import { AbstractUtxoCoin, UtxoNetwork } from './abstractUtxoCoin';
+import { KeyIndices } from '../keychains';
 import * as common from '../../common';
 import { BlockstreamApi } from '../recovery/blockstreamApi';
 import { BlockchairApi } from '../recovery/blockchairApi';
@@ -49,6 +50,15 @@ export class Btc extends AbstractUtxoCoin {
 
   supportsP2wsh(): boolean {
     return true;
+  }
+
+  supportsP2tr(): boolean {
+    return true;
+  }
+
+  /* BTC needs all keys to sign for P2TR */
+  keyIdsForSigning(): number[] {
+    return [KeyIndices.USER, KeyIndices.BACKUP, KeyIndices.BITGO];
   }
 
   getRecoveryFeePerBytes(): Bluebird<number> {
