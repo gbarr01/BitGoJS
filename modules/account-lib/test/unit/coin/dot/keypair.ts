@@ -12,25 +12,29 @@ describe('Dot KeyPair', () => {
   describe('Keypair creation', () => {
     it('initial state', () => {
       const keyPair = new Dot.KeyPair();
-      should.exists(keyPair.getKeys().prv);
-      should.exists(keyPair.getKeys().pub);
-      should.equal(keyPair.getKeys().prv!.length, 64);
-      should.equal(keyPair.getKeys().pub.length, 64);
+      const decodedKeys = Dot.Utils.default.decodeDotKeyringPair(keyPair.getKeys());
+      should.exists(decodedKeys.prv);
+      should.exists(decodedKeys.pub);
+      should.equal(decodedKeys.prv!.length, 64);
+      should.equal(decodedKeys.pub.length, 64);
     });
 
     it('initialization from private key', () => {
       let keyPair = new Dot.KeyPair({ prv: account1.secretKey });
-      should.equal(keyPair.getKeys().prv, account1.secretKey);
-      should.equal(keyPair.getKeys().pub, account1.publicKey);
+      let decodedKeys = Dot.Utils.default.decodeDotKeyringPair(keyPair.getKeys());
+      should.equal(decodedKeys.prv, account1.secretKey);
+      should.equal(decodedKeys.pub, account1.publicKey);
 
       keyPair = new Dot.KeyPair({ prv: account2.secretKey });
-      should.equal(keyPair.getKeys().prv, account2.secretKey);
-      should.equal(keyPair.getKeys().pub, account2.publicKey);
+      decodedKeys = Dot.Utils.default.decodeDotKeyringPair(keyPair.getKeys());
+      should.equal(decodedKeys.prv, account2.secretKey);
+      should.equal(decodedKeys.pub, account2.publicKey);
     });
 
     it('initialization from public key', () => {
       const keyPair = new Dot.KeyPair({ pub: account3.publicKey });
-      should.equal(keyPair.getKeys().pub, account3.publicKey);
+      const decodedKeys = Dot.Utils.default.decodeDotKeyringPair(keyPair.getKeys());
+      should.equal(decodedKeys.pub, account3.publicKey);
     });
   });
 
@@ -70,7 +74,7 @@ describe('Dot KeyPair', () => {
   describe('getSigningKeyPair', () => {
     it('should create a signing keypair', () => {
       const keyPair = new Dot.KeyPair({ prv: account1.secretKey });
-      const address = keyPair.getSigningKeyPair().address;
+      const address = keyPair.getKeys().address;
       address.should.equal(account1.address);
     });
   });
@@ -78,7 +82,8 @@ describe('Dot KeyPair', () => {
   describe('getKeys', () => {
     it('should get private and public keys in the protocol default format', () => {
       const keyPair = new Dot.KeyPair(defaultSeed);
-      const { prv, pub } = keyPair.getKeys();
+      const decodedKeys = Dot.Utils.default.decodeDotKeyringPair(keyPair.getKeys());
+      const { prv, pub } = decodedKeys;
       pub.should.equal(defaultAccount.publicKey);
       if (prv) {
         prv.should.equal(defaultAccount.secretKey);
@@ -87,7 +92,8 @@ describe('Dot KeyPair', () => {
 
     it('should get private and public keys for a random seed', () => {
       const keyPair = new Dot.KeyPair();
-      const { prv, pub } = keyPair.getKeys();
+      const decodedKeys = Dot.Utils.default.decodeDotKeyringPair(keyPair.getKeys());
+      const { prv, pub } = decodedKeys;
       should.exist(prv);
       should.exist(pub);
     });

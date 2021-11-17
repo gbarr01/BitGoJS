@@ -7,9 +7,10 @@ import { Transaction } from './transaction';
 import { UnsignedTransaction } from '@substrate/txwrapper-core';
 import { TransactionType } from '../baseCoin';
 import { AddProxyArgs, MethodNames, proxyType } from './iface';
-import { AddProxyTransactionSchema } from './txnSchema';
+import { WalletInitializationSchema } from './txnSchema';
+import { BaseAddress } from '../baseCoin/iface';
 
-export class AddProxyBuilder extends TransactionBuilder {
+export class WalletInitializationBuilder extends TransactionBuilder {
   protected _delegate: string;
   protected _proxyType: proxyType;
   protected _delay: string;
@@ -19,14 +20,13 @@ export class AddProxyBuilder extends TransactionBuilder {
   }
 
   /**
-   *
    * Register a proxy account for the sender that is able to make calls on its behalf.
    *
    * @returns {UnsignedTransaction} an unsigned Dot transaction
    *
    * @see https://polkadot.js.org/docs/substrate/extrinsics/#proxy
    */
-  protected buildDotTxn(): UnsignedTransaction {
+  protected buildTransaction(): UnsignedTransaction {
     const baseTxInfo = this.createBaseTxInfo();
     return methods.proxy.addProxy(
       {
@@ -40,40 +40,37 @@ export class AddProxyBuilder extends TransactionBuilder {
   }
 
   protected get transactionType(): TransactionType {
-    return TransactionType.AddProxy;
+    return TransactionType.WalletInitialization;
   }
 
   /**
+   * The account to delegate auth to.
    *
-   * The account to delegate auth to
-   *
-   * @param {string} delegate
+   * @param {BaseAddress} owner
    * @returns {AddProxyBuilder} This builder.
    *
    * @see https://wiki.polkadot.network/docs/learn-proxies#why-use-a-proxy
    */
-  delegate(delegate: string): this {
-    this.validateAddress({ address: delegate });
-    this._delegate = delegate;
+  owner(owner: BaseAddress): this {
+    this.validateAddress({ address: owner.address });
+    this._delegate = owner.address;
     return this;
   }
 
   /**
-   *
-   * The proxy type to add
+   * The proxy type to add.
    *
    * @param {proxyType} proxyType
    * @returns {AddProxyBuilder} This builder.
    *
    * @see https://wiki.polkadot.network/docs/learn-proxies#proxy-types
    */
-  proxyType(proxyType: proxyType): this {
+  type(proxyType: proxyType): this {
     this._proxyType = proxyType;
     return this;
   }
 
   /**
-   *
    * The number of blocks that an announcement must be in place for.
    * before the corresponding call may be dispatched.
    * If zero, then no announcement is needed.
@@ -101,7 +98,7 @@ export class AddProxyBuilder extends TransactionBuilder {
       const delegate = txMethod.delegate;
       const proxyType = txMethod.proxyType;
       const delay = txMethod.delay;
-      const validationResult = AddProxyTransactionSchema.validate({ delegate, proxyType, delay });
+      const validationResult = WalletInitializationSchema.validate({ delegate, proxyType, delay });
       if (validationResult.error) {
         throw new InvalidTransactionError(`Transaction validation failed: ${validationResult.error.message}`);
       }
@@ -113,8 +110,8 @@ export class AddProxyBuilder extends TransactionBuilder {
     const tx = super.fromImplementation(rawTransaction);
     if (this._method?.name === MethodNames.AddProxy) {
       const txMethod = this._method.args as AddProxyArgs;
-      this.delegate(txMethod.delegate);
-      this.proxyType(txMethod.proxyType);
+      this.owner({ address: txMethod.delegate });
+      this.type(txMethod.proxyType);
       this.delay(new BigNumber(txMethod.delay).toString());
     } else {
       throw new InvalidTransactionError(`Invalid Transaction Type: ${this._method?.name}. Expected addProxy`);
@@ -129,7 +126,7 @@ export class AddProxyBuilder extends TransactionBuilder {
   }
 
   private validateFields(delegate: string, proxyType: string, delay: string): void {
-    const validationResult = AddProxyTransactionSchema.validate({
+    const validationResult = WalletInitializationSchema.validate({
       delegate,
       proxyType,
       delay,

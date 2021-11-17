@@ -1,18 +1,18 @@
 import { coins } from '@bitgo/statics';
 import should from 'should';
 import sinon, { assert } from 'sinon';
-import { StakeBuilder } from '../../../../../src/coin/dot';
+import { StakingBuilder } from '../../../../../src/coin/dot';
 import * as DotResources from '../../../../resources/dot';
 
 describe('Dot Stake Builder', () => {
-  let builder: StakeBuilder;
+  let builder: StakingBuilder;
 
   const sender = DotResources.accounts.account1;
   const receiver = DotResources.accounts.account2;
 
   beforeEach(() => {
     const config = coins.get('dot');
-    builder = new StakeBuilder(config);
+    builder = new StakingBuilder(config);
   });
   describe('setter validation', () => {
     it('should validate stake amount', () => {
@@ -61,7 +61,7 @@ describe('Dot Stake Builder', () => {
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .sequenceId({ name: 'Nonce', keyword: 'nonce', value: 200 })
         .fee({ amount: 0, type: 'tip' })
-        .transactionVersion(7);
+        .version(7);
       builder.sign({ key: sender.secretKey });
       const tx = await builder.build();
       const txJson = tx.toJson();
@@ -91,7 +91,7 @@ describe('Dot Stake Builder', () => {
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .sequenceId({ name: 'Nonce', keyword: 'nonce', value: 200 })
         .fee({ amount: 0, type: 'tip' })
-        .transactionVersion(7);
+        .version(7);
       const tx = await builder.build();
       const txJson = tx.toJson();
       should.deepEqual(txJson.amount, '90034235235322');
@@ -114,7 +114,7 @@ describe('Dot Stake Builder', () => {
       builder
         .validity({ firstValid: 3933 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
-        .transactionVersion(7);
+        .version(7);
       const tx = await builder.build();
       const txJson = tx.toJson();
       should.deepEqual(txJson.amount, '50000000000000');
@@ -161,7 +161,7 @@ describe('Dot Stake Builder', () => {
       builder
         .validity({ firstValid: 3933 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
-        .transactionVersion(7);
+        .version(7);
       const tx = await builder.build();
       const txJson = tx.toJson();
       should.deepEqual(txJson.amount, '50000000000000');

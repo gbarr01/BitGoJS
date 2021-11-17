@@ -1,14 +1,5 @@
 import { BaseTxInfo, TypeRegistry, DecodedUnsignedTx } from '@substrate/txwrapper-core/lib/types';
 
-export interface Seed {
-  seed: Uint8Array;
-}
-
-/**
- * Specification name type of the chain. Used in setting up the registry
- */
-export type specNameType = 'kusama' | 'polkadot' | 'westend' | 'statemint' | 'statemine';
-
 /**
  * Method names for the transaction method. Names change based on the type of transaction e.g 'bond' for the staking transaction
  */
@@ -35,12 +26,12 @@ export interface TxData {
   chainName: string;
   specName?: string;
   amount?: string;
-  dest?: string;
+  to?: string;
   tip?: number;
   eraPeriod?: number;
   controller?: string;
   payee?: string;
-  delegate?: string;
+  owner?: string;
   proxyType?: string;
   delay?: string;
   real?: string;
@@ -110,12 +101,10 @@ export interface AddProxyArgs {
 /**
  * Transaction method specific args
  */
-export type ProxyCallArgs =
-  | string
-  | {
-      callIndex?: string;
-      args?: TransferArgs | StakeArgs | UnstakeArgs;
-    };
+export type ProxyCallArgs = {
+  callIndex: string;
+  args: TransferArgs;
+};
 
 /**
  * Transaction method specific args
@@ -123,7 +112,6 @@ export type ProxyCallArgs =
 export interface ProxyArgs {
   real: string;
   forceProxyType: proxyType;
-  call: string;
 }
 
 /**
@@ -131,7 +119,7 @@ export interface ProxyArgs {
  */
 export interface TxMethod {
   args: TransferArgs | StakeArgs | AddProxyArgs | ProxyArgs | UnstakeArgs;
-  name: 'transferKeepAlive' | 'bond' | 'addProxy' | 'proxy' | 'unbond';
+  name: MethodNames;
   pallet: string;
 }
 

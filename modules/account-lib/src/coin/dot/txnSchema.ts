@@ -3,6 +3,16 @@ import Utils from './utils';
 
 const addressSchema = joi.string().custom((addr) => Utils.isValidAddress(addr));
 
+const proxyTypes = [
+  'Any',
+  'NonTransfer',
+  'Governance',
+  'Staking',
+  'UnusedSudoBalances',
+  'IdentityJudgement',
+  'CancelProxy',
+];
+
 export const BaseTransactionSchema = joi.object({
   sender: addressSchema.required(),
   blockNumber: joi.number().required(),
@@ -33,8 +43,8 @@ export const SignedTransactionSchema = joi.object({
 });
 
 export const TransferTransactionSchema = joi.object({
-  value: joi.string().required(),
-  dest: addressSchema.required(),
+  amount: joi.string().required(),
+  to: addressSchema.required(),
 });
 
 export const StakeTransactionSchema = joi.object({
@@ -54,10 +64,10 @@ export const StakeTransactionSchema = joi.object({
   ],
 });
 
-export const AddProxyTransactionSchema = joi.object({
+export const WalletInitializationSchema = joi.object({
   proxyType: joi
     .string()
-    .valid('Any', 'NonTransfer', 'Governance', 'Staking', 'UnusedSudoBalances', 'IdentityJudgement', 'CancelProxy')
+    .valid(...proxyTypes)
     .required(),
   delegate: addressSchema.required(),
   delay: joi.string().required(),
@@ -67,9 +77,10 @@ export const ProxyTransactionSchema = joi.object({
   real: addressSchema.required(),
   forceProxyType: joi
     .string()
-    .valid('Any', 'NonTransfer', 'Governance', 'Staking', 'UnusedSudoBalances', 'IdentityJudgement', 'CancelProxy')
+    .valid(...proxyTypes)
     .required(),
-  call: joi.string().required(),
+  amount: joi.string().required(),
+  to: addressSchema.required(),
 });
 
 export const UnstakeTransactionSchema = joi.object({

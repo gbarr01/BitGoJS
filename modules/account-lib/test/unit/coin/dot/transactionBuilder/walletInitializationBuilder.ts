@@ -1,50 +1,60 @@
 import { coins } from '@bitgo/statics';
 import should from 'should';
 import sinon, { assert } from 'sinon';
-import { ProxyBuilder } from '../../../../../src/coin/dot';
+import { WalletInitializationBuilder } from '../../../../../src/coin/dot';
 import * as DotResources from '../../../../resources/dot';
 
-describe('Dot Proxy Builder', () => {
-  let builder: ProxyBuilder;
+describe('Dot Add Proxy Builder', () => {
+  let builder: WalletInitializationBuilder;
 
-  const sender = DotResources.accounts.account3;
-  const real = DotResources.accounts.account1;
+  const sender = DotResources.accounts.account1;
+  const receiver = DotResources.accounts.account3;
 
   beforeEach(() => {
     const config = coins.get('dot');
-    builder = new ProxyBuilder(config);
+    builder = new WalletInitializationBuilder(config);
   });
   describe('setter validation', () => {
-    it('should validate real address', () => {
+    it('should validate delay', () => {
+      const spy = sinon.spy(builder, 'validateValue');
+      should.throws(
+        () => builder.delay('-1'),
+        (e: Error) => e.message === 'Value cannot be less than zero',
+      );
+      should.doesNotThrow(() => builder.delay('0'));
+      assert.calledTwice(spy);
+    });
+
+    it('should validate owner address', () => {
       const spy = sinon.spy(builder, 'validateAddress');
       should.throws(
-        () => builder.real('asd'),
+        () => builder.owner({ address: 'asd' }),
         (e: Error) => e.message === `The address 'asd' is not a well-formed dot address`,
       );
-      should.doesNotThrow(() => builder.real(sender.address));
+      should.doesNotThrow(() => builder.owner({ address: sender.address }));
       assert.calledTwice(spy);
     });
   });
 
-  describe('build proxy transaction', () => {
-    it('should build a proxy transaction', async () => {
+  describe('build addProxy transaction', () => {
+    it('should build a addProxy transaction', async () => {
       builder
         .testnet()
-        .real(real.address)
-        .forceProxyType('Any')
-        .call(DotResources.rawTx.proxy.transferCall)
+        .owner({ address: receiver.address })
+        .type('Any')
+        .delay('0')
         .sender({ address: sender.address })
         .validity({ firstValid: 3933, maxDuration: 64 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .sequenceId({ name: 'Nonce', keyword: 'nonce', value: 200 })
         .fee({ amount: 0, type: 'tip' })
-        .transactionVersion(7);
+        .version(7);
       builder.sign({ key: sender.secretKey });
       const tx = await builder.build();
       const txJson = tx.toJson();
-      should.deepEqual(txJson.real, real.address);
-      should.deepEqual(txJson.forceProxyType, 'Any');
-      should.deepEqual(txJson.call, DotResources.rawTx.proxy.transferCall);
+      should.deepEqual(txJson.owner, receiver.address);
+      should.deepEqual(txJson.proxyType, 'Any');
+      should.deepEqual(txJson.delay, '0');
       should.deepEqual(txJson.sender, sender.address);
       should.deepEqual(txJson.blockNumber, 3933);
       should.deepEqual(txJson.blockHash, '0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d');
@@ -57,23 +67,23 @@ describe('Dot Proxy Builder', () => {
       should.deepEqual(txJson.eraPeriod, 64);
     });
 
-    it('should build an unsigned proxy transaction', async () => {
+    it('should build an unsigned addProxy transaction', async () => {
       builder
         .testnet()
-        .real(real.address)
-        .forceProxyType('Any')
-        .call(DotResources.rawTx.proxy.transferCall)
+        .owner({ address: receiver.address })
+        .type('Any')
+        .delay('0')
         .sender({ address: sender.address })
         .validity({ firstValid: 3933, maxDuration: 64 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .sequenceId({ name: 'Nonce', keyword: 'nonce', value: 200 })
         .fee({ amount: 0, type: 'tip' })
-        .transactionVersion(7);
+        .version(7);
       const tx = await builder.build();
       const txJson = tx.toJson();
-      should.deepEqual(txJson.real, real.address);
-      should.deepEqual(txJson.forceProxyType, 'Any');
-      should.deepEqual(txJson.call, DotResources.rawTx.proxy.transferCall);
+      should.deepEqual(txJson.owner, receiver.address);
+      should.deepEqual(txJson.proxyType, 'Any');
+      should.deepEqual(txJson.delay, '0');
       should.deepEqual(txJson.sender, sender.address);
       should.deepEqual(txJson.blockNumber, 3933);
       should.deepEqual(txJson.blockHash, '0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d');
@@ -87,16 +97,16 @@ describe('Dot Proxy Builder', () => {
     });
 
     it('should build from raw signed tx', async () => {
-      builder.testnet().from(DotResources.rawTx.proxy.signed);
+      builder.testnet().from(DotResources.rawTx.addProxy.signed);
       builder
         .validity({ firstValid: 3933, maxDuration: 64 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
-        .transactionVersion(7);
+        .version(7);
       const tx = await builder.build();
       const txJson = tx.toJson();
-      should.deepEqual(txJson.real, real.address);
-      should.deepEqual(txJson.forceProxyType, 'Any');
-      should.deepEqual(txJson.call, DotResources.rawTx.proxy.transferCall);
+      should.deepEqual(txJson.owner, receiver.address);
+      should.deepEqual(txJson.proxyType, 'Any');
+      should.deepEqual(txJson.delay, '0');
       should.deepEqual(txJson.sender, sender.address);
       should.deepEqual(txJson.blockNumber, 3933);
       should.deepEqual(txJson.blockHash, '0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d');
@@ -110,7 +120,7 @@ describe('Dot Proxy Builder', () => {
     });
 
     it('should build from raw unsigned tx', async () => {
-      builder.testnet().from(DotResources.rawTx.proxy.unsigned);
+      builder.testnet().from(DotResources.rawTx.addProxy.unsigned);
       builder
         .validity({ firstValid: 3933, maxDuration: 64 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
@@ -118,9 +128,9 @@ describe('Dot Proxy Builder', () => {
         .sign({ key: sender.secretKey });
       const tx = await builder.build();
       const txJson = tx.toJson();
-      should.deepEqual(txJson.real, real.address);
-      should.deepEqual(txJson.forceProxyType, 'Any');
-      should.deepEqual(txJson.call, DotResources.rawTx.proxy.transferCall);
+      should.deepEqual(txJson.owner, receiver.address);
+      should.deepEqual(txJson.proxyType, 'Any');
+      should.deepEqual(txJson.delay, '0');
       should.deepEqual(txJson.sender, sender.address);
       should.deepEqual(txJson.blockNumber, 3933);
       should.deepEqual(txJson.blockHash, '0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d');

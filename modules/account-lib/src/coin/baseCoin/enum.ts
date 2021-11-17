@@ -29,10 +29,6 @@ export enum TransactionType {
   StakingWithdraw,
   // Handle smart contract calls
   ContractCall,
-  // Execute Dot Proxy,
-  Proxy,
-  // Create Dot Proxy,
-  AddProxy,
 }
 
 /**

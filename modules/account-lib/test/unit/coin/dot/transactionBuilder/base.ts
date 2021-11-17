@@ -1,16 +1,15 @@
-import { BaseCoin as CoinConfig, coins } from '@bitgo/statics';
+import { BaseCoin as CoinConfig, coins, PolkadotSpecNameType } from '@bitgo/statics';
 import { UnsignedTransaction } from '@substrate/txwrapper-core';
 import should from 'should';
 import sinon, { assert } from 'sinon';
 import { TransactionType } from '../../../../../src/coin/baseCoin';
 import { BaseKey } from '../../../../../src/coin/baseCoin/iface';
-import { specNameType } from '../../../../../src/coin/dot/iface';
 import { Transaction } from '../../../../../src/coin/dot/transaction';
 import { TransactionBuilder } from '../../../../../src/coin/dot/transactionBuilder';
 import * as DotResources from '../../../../resources/dot';
 
 class StubTransactionBuilder extends TransactionBuilder {
-  protected buildDotTxn(): UnsignedTransaction {
+  protected buildTransaction(): UnsignedTransaction {
     throw new Error('Method not implemented.');
   }
 
@@ -42,7 +41,7 @@ class StubTransactionBuilder extends TransactionBuilder {
     return this._transactionVersion;
   }
 
-  getSpecName(): specNameType {
+  getSpecName(): PolkadotSpecNameType {
     return this._specName;
   }
 
@@ -153,7 +152,7 @@ describe('Dot Transfer Builder', () => {
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .sequenceId({ name: 'Nonce', keyword: 'nonce', value: 200 })
         .fee({ amount: 0, type: 'tip' })
-        .transactionVersion(7);
+        .version(7);
       should.doesNotThrow(() => builder.validateTransaction(builder.getTransaction()));
     });
 

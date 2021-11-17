@@ -1,42 +1,60 @@
 import { BaseCoin as CoinConfig } from '@bitgo/statics';
-import { TransactionType } from '../baseCoin';
-import { InvalidTransactionError } from '../baseCoin/errors';
-import { methods, decode } from '@substrate/txwrapper-polkadot';
-import { UnsignedTransaction } from '@substrate/txwrapper-core';
+import { decode, methods } from '@substrate/txwrapper-polkadot';
 import BigNumber from 'bignumber.js';
+import { InvalidTransactionError } from '../baseCoin/errors';
 import { TransactionBuilder } from './transactionBuilder';
 import { Transaction } from './transaction';
-import { MethodNames, TransferArgs } from './iface';
-import { TransferTransactionSchema } from './txnSchema';
+import { UnsignedTransaction } from '@substrate/txwrapper-core';
+import { TransactionType } from '../baseCoin';
+import { MethodNames, ProxyArgs, proxyType, TransferArgs } from './iface';
+import { ProxyTransactionSchema, TransferTransactionSchema } from './txnSchema';
+import utils from './utils';
 import { BaseAddress } from '../baseCoin/iface';
 
 export class TransferBuilder extends TransactionBuilder {
   protected _amount: string;
-  protected _dest: string;
+  protected _to: string;
+  protected _real: string;
+  protected _forceProxyType: proxyType;
+  protected _call: string;
 
   constructor(_coinConfig: Readonly<CoinConfig>) {
     super(_coinConfig);
   }
-
   /**
    *
-   *
-   * Move some assets from the sender account to another, keeping the sender account alive.
+   * Dispatch the given call from an account that the sender is authorised for through add_proxy.
    *
    * @returns {UnsignedTransaction} an unsigned Dot transaction
    *
-   * @see https://polkadot.js.org/docs/substrate/extrinsics/#balances
+   * @see https://polkadot.js.org/docs/substrate/extrinsics/#proxy
    */
-  protected buildDotTxn(): UnsignedTransaction {
+  protected buildTransaction(): UnsignedTransaction {
     const baseTxInfo = this.createBaseTxInfo();
-    return methods.balances.transferKeepAlive(
+    const transferTx = methods.balances.transferKeepAlive(
       {
         value: this._amount,
-        dest: this._dest,
+        dest: this._to,
       },
       baseTxInfo.baseTxInfo,
       baseTxInfo.options,
     );
+    if (!this._real) {
+      return transferTx;
+    }
+    return methods.proxy.proxy(
+      {
+        real: this._real,
+        forceProxyType: this._forceProxyType,
+        call: transferTx.method,
+      },
+      baseTxInfo.baseTxInfo,
+      baseTxInfo.options,
+    );
+  }
+
+  protected get transactionType(): TransactionType {
+    return TransactionType.Send;
   }
 
   /**
@@ -65,11 +83,37 @@ export class TransferBuilder extends TransactionBuilder {
    */
   to({ address }: BaseAddress): this {
     this.validateAddress({ address });
-    this._dest = address;
+    this._to = address;
     return this;
   }
-  protected get transactionType(): TransactionType {
-    return TransactionType.Send;
+
+  /**
+   *
+   * The real address of the original tx
+   *
+   * @param {BaseAddress} real
+   * @returns {TransferBuilder} This builder.
+   *
+   * @see https://wiki.polkadot.network/docs/learn-proxies#why-use-a-proxy
+   */
+  real(real: BaseAddress): this {
+    this.validateAddress({ address: real.address });
+    this._real = real.address;
+    return this;
+  }
+
+  /**
+   *
+   * The proxy type to execute
+   *
+   * @param {proxyType} forceProxyType
+   * @returns {TransferBuilder} This builder.
+   *
+   * @see https://wiki.polkadot.network/docs/learn-proxies#proxy-types
+   */
+  forceProxyType(forceProxyType: proxyType): this {
+    this._forceProxyType = forceProxyType;
+    return this;
   }
 
   /** @inheritdoc */
@@ -81,11 +125,25 @@ export class TransferBuilder extends TransactionBuilder {
     });
     if (decodedTxn.method?.name === MethodNames.TransferKeepAlive) {
       const txMethod = decodedTxn.method.args as unknown as TransferArgs;
-      const value = txMethod.value;
-      const dest = txMethod.dest.id;
-      const validationResult = TransferTransactionSchema.validate({ value, dest });
+      const amount = `${txMethod.value}`;
+      const to = txMethod.dest.id;
+      const validationResult = TransferTransactionSchema.validate({ amount, to });
       if (validationResult.error) {
         throw new InvalidTransactionError(`Transfer Transaction validation failed: ${validationResult.error.message}`);
+      }
+    } else if (decodedTxn.method?.name === MethodNames.Proxy) {
+      const txMethod = decodedTxn.method.args as unknown as ProxyArgs;
+      const real = txMethod.real;
+      const forceProxyType = txMethod.forceProxyType;
+      const decodedCall = utils.decodeCallMethod(rawTransaction, {
+        registry: this._registry,
+        metadataRpc: this._metadataRpc,
+      });
+      const amount = `${decodedCall.value}`;
+      const to = decodedCall.dest.id;
+      const validationResult = ProxyTransactionSchema.validate({ real, forceProxyType, amount, to });
+      if (validationResult.error) {
+        throw new InvalidTransactionError(`Proxy Transaction validation failed: ${validationResult.error.message}`);
       }
     }
   }
@@ -97,9 +155,42 @@ export class TransferBuilder extends TransactionBuilder {
       const txMethod = this._method.args as TransferArgs;
       this.amount(txMethod.value);
       this.to({ address: txMethod.dest.id });
+    } else if (this._method?.name === MethodNames.Proxy) {
+      const txMethod = this._method.args as ProxyArgs;
+      this.real({ address: txMethod.real });
+      this.forceProxyType(txMethod.forceProxyType);
+      const decodedCall = utils.decodeCallMethod(rawTransaction, {
+        registry: this._registry,
+        metadataRpc: this._metadataRpc,
+      });
+      if (!decodedCall.value || !decodedCall.dest) {
+        throw new InvalidTransactionError(
+          `Invalid Proxy Transaction Method: ${this._method?.name}. Expected transferKeepAlive`,
+        );
+      }
+      this.amount(`${decodedCall.value}`);
+      this.to({ address: decodedCall.dest.id });
     } else {
-      throw new InvalidTransactionError(`Invalid Transaction Type: ${this._method?.name}. Expected transferKeepAlive`);
+      throw new InvalidTransactionError(
+        `Invalid Transaction Type: ${this._method?.name}. Expected a transferKeepAlive or a proxy transferKeepAlive transaction`,
+      );
     }
     return tx;
+  }
+
+  /** @inheritdoc */
+  validateTransaction(_: Transaction): void {
+    super.validateTransaction(_);
+    this.validateFields(this._to, this._amount, this._real, this._forceProxyType);
+  }
+
+  private validateFields(to: string, amount: string, real?: string, forceProxyType?: string): void {
+    const validationResult = forceProxyType
+      ? ProxyTransactionSchema.validate({ to, amount, real, forceProxyType })
+      : TransferTransactionSchema.validate({ amount, to });
+
+    if (validationResult.error) {
+      throw new InvalidTransactionError(`Proxy Transaction validation failed: ${validationResult.error.message}`);
+    }
   }
 }

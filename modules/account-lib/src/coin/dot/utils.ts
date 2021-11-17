@@ -12,7 +12,8 @@ import base32 from 'hi-base32';
 import { KeyPair } from '.';
 import { BaseUtils } from '../baseCoin';
 import { NotImplementedError } from '../baseCoin/errors';
-import { Seed } from './iface';
+import { DefaultKeys, Seed } from '../baseCoin/iface';
+import { ProxyCallArgs, TransferArgs } from './iface';
 const polkaUtils = require('@polkadot/util');
 const { createTypeUnsafe } = require('@polkadot/types');
 
@@ -61,7 +62,7 @@ export class Utils implements BaseUtils {
   decodeSeed(seed: string): Seed {
     const decoded = base32.decode.asBytes(seed);
     return {
-      seed: new Uint8Array(decoded),
+      seed: Buffer.from(decoded),
     };
   }
 
@@ -69,29 +70,27 @@ export class Utils implements BaseUtils {
     return val.charAt(0).toUpperCase() + val.slice(1);
   }
 
-  decodeCallMethod(tx: string | UnsignedTransaction, options: { metadataRpc: string; registry: TypeRegistry }): string {
+  decodeCallMethod(
+    tx: string | UnsignedTransaction,
+    options: { metadataRpc: string; registry: TypeRegistry },
+  ): TransferArgs {
     const { metadataRpc, registry } = options;
     registry.setMetadata(createMetadata(registry, metadataRpc));
+    let methodCall: any;
     if (typeof tx === 'string') {
       try {
-        const payload = createTypeUnsafe(registry, 'ExtrinsicPayload', [
-          tx,
-          {
-            version: EXTRINSIC_VERSION,
-          },
-        ]);
-        const methodCall = createTypeUnsafe(registry, 'Call', [payload.method]);
-        return methodCall.args[2].toHex();
+        const payload = createTypeUnsafe(registry, 'ExtrinsicPayload', [tx, { version: EXTRINSIC_VERSION }]);
+        methodCall = createTypeUnsafe(registry, 'Call', [payload.method]);
       } catch (e) {
-        const methodCall = registry.createType('Extrinsic', polkaUtils.hexToU8a(tx), {
+        methodCall = registry.createType('Extrinsic', polkaUtils.hexToU8a(tx), {
           isSigned: true,
         }).method;
-        return methodCall.args[2].toHex();
       }
     } else {
-      const methodCall = registry.createType('Call', tx.method);
-      return methodCall.args[2].toHex();
+      methodCall = registry.createType('Call', tx.method);
     }
+    const decodedArgs = methodCall.args[2].toJSON() as unknown as ProxyCallArgs;
+    return decodedArgs.args;
   }
 
   /**
@@ -130,6 +129,25 @@ export class Utils implements BaseUtils {
       registry,
     });
     return txHex;
+  }
+
+  /**
+   * Returns the decoded keypair from a Dot keyring pair
+   *
+   * @param {KeyringPair} keyringPair
+   * @returns {DefaultKeys} default key format
+   */
+  decodeDotKeyringPair(keyringPair: KeyringPair): DefaultKeys {
+    if (keyringPair.isLocked) {
+      return {
+        pub: Buffer.from(keyringPair.publicKey).toString('hex'),
+      };
+    }
+    const keyPair = decodePair('', base64Decode(keyringPair.toJson().encoded), keyringPair.toJson().encoding.type);
+    return {
+      prv: Buffer.from(keyPair.secretKey).toString('hex').slice(0, 64),
+      pub: Buffer.from(keyPair.publicKey).toString('hex'),
+    };
   }
 }
 

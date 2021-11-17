@@ -1,20 +1,19 @@
-import { BaseCoin as CoinConfig, DotNetwork } from '@bitgo/statics';
+import { BaseCoin as CoinConfig, DotNetwork, PolkadotSpecNameType } from '@bitgo/statics';
 import { BaseTransactionBuilderFactory } from '../baseCoin';
 import { BuildTransactionError, NotSupported } from '../baseCoin/errors';
 import { decode, getRegistry } from '@substrate/txwrapper-polkadot';
 import { TypeRegistry } from '@substrate/txwrapper-core/lib/types';
 import { TransactionBuilder } from './transactionBuilder';
 import { TransferBuilder } from './transferBuilder';
-import { ProxyBuilder } from './proxyBuilder';
-import { AddProxyBuilder } from './addProxyBuilder';
-import { StakeBuilder } from './stakeBuilder';
+import { WalletInitializationBuilder } from './walletInitializationBuilder';
+import { StakingBuilder } from './stakingBuilder';
 import { mainnetMetadataRpc, testnetMetadataRpc, westendMetadataRpc } from '../../../resources/dot';
-import { MethodNames, specNameType } from './iface';
+import { MethodNames } from './iface';
 import { UnstakeBuilder } from '.';
 
 export class TransactionBuilderFactory extends BaseTransactionBuilderFactory {
   protected _specVersion: number;
-  protected _specName: specNameType;
+  protected _specName: PolkadotSpecNameType;
   protected _chainName: string;
   protected _metadataRpc: string;
   protected _registry: TypeRegistry;
@@ -29,16 +28,12 @@ export class TransactionBuilderFactory extends BaseTransactionBuilderFactory {
     return new TransferBuilder(this._coinConfig);
   }
 
-  getProxyBuilder(): ProxyBuilder {
-    return new ProxyBuilder(this._coinConfig);
+  getStakeBuilder(): StakingBuilder {
+    return new StakingBuilder(this._coinConfig);
   }
 
-  getStakeBuilder(): StakeBuilder {
-    return new StakeBuilder(this._coinConfig);
-  }
-
-  getAddProxyBuilder(): AddProxyBuilder {
-    return new AddProxyBuilder(this._coinConfig);
+  getWalletInitializationBuilder(): WalletInitializationBuilder {
+    return new WalletInitializationBuilder(this._coinConfig);
   }
 
   getUnstakeBuilder(): UnstakeBuilder {
@@ -85,12 +80,12 @@ export class TransactionBuilderFactory extends BaseTransactionBuilderFactory {
    *
    * The spec name for the registry.
    *
-   * @param {specNameType} specName
+   * @param {PolkadotSpecNameType} specName
    * @returns {TransactionBuilder} This transaction builder.
    *
    * @see https://wiki.polkadot.network/docs/build-transaction-construction
    */
-  specName(specName: specNameType): this {
+  specName(specName: PolkadotSpecNameType): this {
     this._specName = specName;
     return this;
   }
@@ -163,7 +158,7 @@ export class TransactionBuilderFactory extends BaseTransactionBuilderFactory {
 
   private staticsConfig(): void {
     const networkConfig = this._coinConfig.network as DotNetwork;
-    this.specName(networkConfig.specName as specNameType);
+    this.specName(networkConfig.specName);
     this.genesisHash(networkConfig.genesisHash);
     this.specVersion(networkConfig.specVersion);
     this.chainName(networkConfig.chainName);
@@ -217,22 +212,17 @@ export class TransactionBuilderFactory extends BaseTransactionBuilderFactory {
       metadataRpc: this._metadataRpc,
       registry: this._registry,
     });
-    if (decodedTxn.method?.name === MethodNames.TransferKeepAlive) {
+    const methodName = decodedTxn.method?.name;
+    if (methodName === MethodNames.TransferKeepAlive || methodName === MethodNames.Proxy) {
       return this.getTransferBuilder();
-    } else if (decodedTxn.method?.name === MethodNames.Bond) {
+    } else if (methodName === MethodNames.Bond) {
       return this.getStakeBuilder();
-    } else if (decodedTxn.method?.name === MethodNames.AddProxy) {
-      return this.getAddProxyBuilder();
-    } else if (decodedTxn.method?.name === MethodNames.Proxy) {
-      return this.getProxyBuilder();
-    } else if (decodedTxn.method?.name === MethodNames.Unbond) {
+    } else if (methodName === MethodNames.AddProxy) {
+      return this.getWalletInitializationBuilder();
+    } else if (methodName === MethodNames.Unbond) {
       return this.getUnstakeBuilder();
     } else {
       throw new NotSupported('Transaction cannot be parsed or has an unsupported transaction type');
     }
-  }
-
-  public getWalletInitializationBuilder(): TransferBuilder {
-    return new TransferBuilder(this._coinConfig);
   }
 }

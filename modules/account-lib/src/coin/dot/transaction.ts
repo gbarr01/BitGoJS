@@ -7,16 +7,7 @@ import { UnsignedTransaction } from '@substrate/txwrapper-core';
 import { TypeRegistry } from '@substrate/txwrapper-core/lib/types';
 import { decodeAddress } from '@polkadot/keyring';
 import { KeyPair } from './keyPair';
-import {
-  TxData,
-  DecodedTx,
-  TransferArgs,
-  StakeArgs,
-  StakeArgsPayeeRaw,
-  AddProxyArgs,
-  ProxyArgs,
-  UnstakeArgs,
-} from './iface';
+import { TxData, DecodedTx, StakeArgs, StakeArgsPayeeRaw, AddProxyArgs, UnstakeArgs } from './iface';
 import utils from './utils';
 
 export class Transaction extends BaseTransaction {
@@ -45,14 +36,14 @@ export class Transaction extends BaseTransaction {
     if (!this._dotTransaction) {
       throw new InvalidTransactionError('No transaction data to sign');
     }
-    if (!keyPair.getKeys().prv) {
+    if (keyPair.getKeys().isLocked) {
       throw new SigningError('Missing private key');
     }
     const signingPayload = construct.signingPayload(this._dotTransaction, {
       registry: this._registry,
     });
     // Sign a payload. This operation should be performed on an offline device.
-    const signingKeyPair = keyPair.getSigningKeyPair();
+    const signingKeyPair = keyPair.getKeys();
     const txHex = utils.createSignedTx(signingKeyPair, signingPayload, this._dotTransaction, {
       metadataRpc: this._dotTransaction.metadataRpc,
       registry: this._registry,
@@ -129,12 +120,29 @@ export class Transaction extends BaseTransaction {
     };
 
     if (this.type === TransactionType.Send) {
-      const txMethod = decodedTx.method.args as TransferArgs;
-      const keypair = new KeyPair({
-        pub: Buffer.from(decodeAddress(txMethod.dest.id)).toString('hex'),
-      });
-      result.dest = keypair.getAddress();
-      result.amount = txMethod.value;
+      const txMethod = decodedTx.method.args as any;
+      if (txMethod.real) {
+        const keypairReal = new KeyPair({
+          pub: Buffer.from(decodeAddress(txMethod.real)).toString('hex'),
+        });
+        result.real = keypairReal.getAddress();
+        result.forceProxyType = txMethod.forceProxyType;
+        const decodedCall = utils.decodeCallMethod(this._dotTransaction, {
+          metadataRpc: this._dotTransaction.metadataRpc,
+          registry: this._registry,
+        });
+        const keypairDest = new KeyPair({
+          pub: Buffer.from(decodeAddress(decodedCall.dest.id)).toString('hex'),
+        });
+        result.to = keypairDest.getAddress();
+        result.amount = decodedCall.value;
+      } else {
+        const keypairDest = new KeyPair({
+          pub: Buffer.from(decodeAddress(txMethod.dest.id)).toString('hex'),
+        });
+        result.to = keypairDest.getAddress();
+        result.amount = txMethod.value;
+      }
     }
 
     if (this.type === TransactionType.StakingActivate) {
@@ -158,28 +166,14 @@ export class Transaction extends BaseTransaction {
       }
     }
 
-    if (this.type === TransactionType.AddProxy) {
+    if (this.type === TransactionType.WalletInitialization) {
       const txMethod = decodedTx.method.args as AddProxyArgs;
       const keypair = new KeyPair({
         pub: Buffer.from(decodeAddress(txMethod.delegate, false, this._registry.chainSS58)).toString('hex'),
       });
-      result.delegate = keypair.getAddress();
+      result.owner = keypair.getAddress();
       result.proxyType = txMethod.proxyType;
       result.delay = txMethod.delay;
-    }
-
-    if (this.type === TransactionType.Proxy) {
-      const txMethod = decodedTx.method.args as ProxyArgs;
-      const keypair = new KeyPair({
-        pub: Buffer.from(decodeAddress(txMethod.real, false, this._registry.chainSS58)).toString('hex'),
-      });
-      result.real = keypair.getAddress();
-      result.forceProxyType = txMethod.forceProxyType;
-      const decodedCall = utils.decodeCallMethod(this._dotTransaction, {
-        metadataRpc: this._dotTransaction.metadataRpc,
-        registry: this._registry,
-      });
-      result.call = decodedCall;
     }
 
     if (this.type === TransactionType.StakingUnlock) {

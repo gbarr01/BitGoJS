@@ -43,10 +43,15 @@ export interface AccountNetwork extends BaseNetwork {
   readonly accountExplorerUrl?: string;
 }
 
+/**
+ * Specification name type of the chain. Used in setting up the registry
+ */
+export type PolkadotSpecNameType = 'kusama' | 'polkadot' | 'westend' | 'statemint' | 'statemine';
+
 export interface DotNetwork extends AccountNetwork {
   // some chains pay fees via an enterprise gas task. The account explorer url
   // is a url that can be used to look up the account for the gas tank on-chain.
-  readonly specName: string;
+  readonly specName: PolkadotSpecNameType;
   readonly genesisHash: string;
   readonly specVersion: number;
   readonly chainName: string;
@@ -242,7 +247,7 @@ class Polkadot extends Mainnet implements DotNetwork {
   name = 'Polkadot';
   family = CoinFamily.DOT;
   explorerUrl = 'https://polkadot.subscan.io/extrinsic/';
-  specName = 'polkadot';
+  specName = 'polkadot' as PolkadotSpecNameType;
   genesisHash = '0x91b171bb158e2d3848fa23a9f1c25182fb8e20313b2c1eb49219da7a70ce90c3';
   specVersion = 9122;
   chainName = 'Polkadot';
@@ -252,7 +257,7 @@ class PolkadotTestnet extends Testnet implements DotNetwork {
   name = 'Westend';
   family = CoinFamily.DOT;
   explorerUrl = 'https://westend.subscan.io/extrinsic/';
-  specName = 'westend';
+  specName = 'westend' as PolkadotSpecNameType;
   genesisHash = '0xe143f23803ac50e8f6f8e62695d1ce9e4e1d68aa36c1cd2cfd15340213f3423e';
   specVersion = 9122;
   chainName = 'Westend';

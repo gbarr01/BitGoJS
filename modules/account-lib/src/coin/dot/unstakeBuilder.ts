@@ -25,7 +25,7 @@ export class UnstakeBuilder extends TransactionBuilder {
    *
    * @see https://polkadot.js.org/docs/substrate/extrinsics/#staking
    */
-  protected buildDotTxn(): UnsignedTransaction {
+  protected buildTransaction(): UnsignedTransaction {
     const baseTxInfo = this.createBaseTxInfo();
     return methods.staking.unbond(
       {

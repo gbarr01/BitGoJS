@@ -28,7 +28,7 @@ export class KeyPair extends Ed25519KeyPair {
    * @see https://polkadot.js.org/docs/api/start/keyring
    */
   protected createPolkadotPair(): KeyringPair {
-    const secretKey = this.keyPair.prv ? new Uint8Array(Buffer.from(this.keyPair.prv, 'hex')) : new Uint8Array();
+    const secretKey = this.keyPair.prv ? new Uint8Array(Buffer.from(this.keyPair.prv, 'hex')) : undefined;
     const publicKey = new Uint8Array(Buffer.from(this.keyPair.pub, 'hex'));
     return createPair({ toSS58: keyring.encodeAddress, type: TYPE }, { secretKey, publicKey });
   }
@@ -38,24 +38,9 @@ export class KeyPair extends Ed25519KeyPair {
     return this.createPolkadotPair().address;
   }
 
-  /**
-   * Getting the KeyringPair for signing a dot transaction.
-   *
-   * @returns {KeyringPair} dot KeyringPair
-   */
-  getSigningKeyPair(): KeyringPair {
-    return this.createPolkadotPair();
-  }
-
   /** @inheritdoc */
-  getKeys(): DefaultKeys {
-    const result: DefaultKeys = { pub: this.keyPair.pub };
-
-    if (this.keyPair.prv) {
-      result.prv = this.keyPair.prv;
-    }
-
-    return result;
+  getKeys(): KeyringPair {
+    return this.createPolkadotPair();
   }
 
   /** @inheritdoc */

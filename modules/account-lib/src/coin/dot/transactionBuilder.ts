@@ -1,4 +1,4 @@
-import { BaseCoin as CoinConfig, DotNetwork } from '@bitgo/statics';
+import { BaseCoin as CoinConfig, DotNetwork, PolkadotSpecNameType } from '@bitgo/statics';
 import { BaseTransactionBuilder, TransactionType } from '../baseCoin';
 import { InvalidTransactionError, BuildTransactionError } from '../baseCoin/errors';
 import { BaseAddress, BaseKey } from '../baseCoin/iface';
@@ -12,7 +12,7 @@ import { TypeRegistry, DecodedSignedTx, DecodedSigningPayload } from '@substrate
 import { BaseTransactionSchema, SignedTransactionSchema, SigningPayloadTransactionSchema } from './txnSchema';
 import { Transaction } from './transaction';
 import { KeyPair } from './keyPair';
-import { CreateBaseTxInfo, FeeOptions, sequenceId, specNameType, TxMethod, validityWindow } from './iface';
+import { CreateBaseTxInfo, FeeOptions, sequenceId, TxMethod, validityWindow } from './iface';
 import Utils from './utils';
 import { AddressValidationError } from './errors';
 
@@ -27,7 +27,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
   protected _metadataRpc: string;
   protected _specVersion: number;
   protected _transactionVersion: number;
-  protected _specName: specNameType;
+  protected _specName: PolkadotSpecNameType;
   protected _chainName: string;
   protected _nonce: number;
   protected _tip?: number;
@@ -130,7 +130,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
    *
    * @see https://wiki.polkadot.network/docs/build-transaction-construction
    */
-  transactionVersion(transactionVersion: number): this {
+  version(transactionVersion: number): this {
     this._transactionVersion = transactionVersion;
     return this;
   }
@@ -139,12 +139,12 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
    *
    * The spec name for the registry.
    *
-   * @param {specNameType} specName
+   * @param {PolkadotSpecNameType} specName
    * @returns {TransactionBuilder} This transaction builder.
    *
    * @see https://wiki.polkadot.network/docs/build-transaction-construction
    */
-  specName(specName: specNameType): this {
+  specName(specName: PolkadotSpecNameType): this {
     this._specName = specName;
     return this;
   }
@@ -238,7 +238,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
    */
   private staticsConfig(): void {
     const networkConfig = this._coinConfig.network as DotNetwork;
-    this.specName(networkConfig.specName as specNameType);
+    this.specName(networkConfig.specName);
     this.genesisHash(networkConfig.genesisHash);
     this.specVersion(networkConfig.specVersion);
     this.chainName(networkConfig.chainName);
@@ -306,7 +306,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
     }) as DecodedSigningPayload | DecodedSignedTx;
     if (this.isSigningPayload(decodedTxn)) {
       this.blockHash(decodedTxn.blockHash);
-      this.transactionVersion(decodedTxn.transactionVersion);
+      this.version(decodedTxn.transactionVersion);
     } else {
       const keypair = new KeyPair({
         pub: Buffer.from(decodeAddress(decodedTxn.address)).toString('hex'),
@@ -328,7 +328,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
 
   /** @inheritdoc */
   protected async buildImplementation(): Promise<Transaction> {
-    this.transaction.setDotTransaction(this.buildDotTxn());
+    this.transaction.setDotTransaction(this.buildTransaction());
     this.transaction.setTransactionType(this.transactionType);
     this.transaction.registry(this._registry);
     this.transaction.chainName(this._chainName);
@@ -370,7 +370,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
   /**
    * The transaction type.
    */
-  protected abstract buildDotTxn(): UnsignedTransaction;
+  protected abstract buildTransaction(): UnsignedTransaction;
 
   /**
    * The transaction type.
@@ -460,7 +460,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
     chainName: string,
     nonce: number,
     specVersion: number,
-    specName: specNameType,
+    specName: PolkadotSpecNameType,
     transactionVersion: number,
     eraPeriod: number | undefined,
     tip: number | undefined,

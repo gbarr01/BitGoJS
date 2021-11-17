@@ -12,7 +12,7 @@ import { TransactionBuilder } from './transactionBuilder';
 import { StakeTransactionSchema } from './txnSchema';
 import { KeyPair } from '.';
 
-export class StakeBuilder extends TransactionBuilder {
+export class StakingBuilder extends TransactionBuilder {
   protected _amount: string;
   protected _controller: string;
   protected _payee: StakeArgsPayee;
@@ -30,7 +30,7 @@ export class StakeBuilder extends TransactionBuilder {
    *
    * @see https://polkadot.js.org/docs/substrate/extrinsics/#staking
    */
-  protected buildDotTxn(): UnsignedTransaction {
+  protected buildTransaction(): UnsignedTransaction {
     const baseTxInfo = this.createBaseTxInfo();
     return methods.staking.bond(
       {
@@ -52,7 +52,7 @@ export class StakeBuilder extends TransactionBuilder {
    * The amount to stake.
    *
    * @param {string} amount
-   * @returns {StakeBuilder} This stake builder.
+   * @returns {StakeBuilder} This staking builder.
    *
    * @see https://wiki.polkadot.network/docs/learn-nominator#required-minimum-stake
    */
@@ -67,7 +67,7 @@ export class StakeBuilder extends TransactionBuilder {
    * The controller of the staked amount.
    *
    * @param {string} controller
-   * @returns {StakeBuilder} This stake builder.
+   * @returns {StakeBuilder} This staking builder.
    *
    * @see https://wiki.polkadot.network/docs/learn-staking#accounts
    */
@@ -83,7 +83,7 @@ export class StakeBuilder extends TransactionBuilder {
    * Can be set to another accounts address.
    *
    * @param {string} payee
-   * @returns {StakeBuilder} This stake builder.
+   * @returns {StakeBuilder} This staking builder.
    *
    * @see https://wiki.polkadot.network/docs/learn-staking#4-rewards-mechanism
    */

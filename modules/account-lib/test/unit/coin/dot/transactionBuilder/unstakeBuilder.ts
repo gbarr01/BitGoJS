@@ -36,7 +36,7 @@ describe('Dot Unstake Builder', () => {
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .sequenceId({ name: 'Nonce', keyword: 'nonce', value: 200 })
         .fee({ amount: 0, type: 'tip' })
-        .transactionVersion(7);
+        .version(7);
       builder.sign({ key: sender.secretKey });
       const tx = await builder.build();
       const txJson = tx.toJson();
@@ -62,7 +62,7 @@ describe('Dot Unstake Builder', () => {
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .sequenceId({ name: 'Nonce', keyword: 'nonce', value: 200 })
         .fee({ amount: 0, type: 'tip' })
-        .transactionVersion(7);
+        .version(7);
       const tx = await builder.build();
       const txJson = tx.toJson();
       should.deepEqual(txJson.amount, '50000000000000');
@@ -83,7 +83,7 @@ describe('Dot Unstake Builder', () => {
       builder
         .validity({ firstValid: 3933 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
-        .transactionVersion(7);
+        .version(7);
       const tx = await builder.build();
       const txJson = tx.toJson();
       should.deepEqual(txJson.amount, '50000000000000');
