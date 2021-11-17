@@ -12,7 +12,7 @@ Thanks for contributing to this library. Below are some tips to help you underst
 As specified in [the project README](README.md), there are two main classes that users will interact with:
 
 * `TransactionBuilder`: A class that implements coin specific logic to handle the construction, validation, and signing of blockchain transactions.
-* `Transaction`: Javascript representations of blockchain transactions.
+* `Transaction`: JavaScript representations of blockchain transactions.
 
 The `TransactionBuilder`'s job is to build + sign `transactions` for a specific blockchain.
 
@@ -62,5 +62,5 @@ npm test
 ## Coding Norms & Expectations
 When contributing, it is recommended that you follow the existing patterns defined in the project. Pull requests that break these norms will likely be rejected or require a round of feedback. A few specific notes:
 
-- Do not specify default accessors. In Typescript, the default accessor for a class attribute is
+- Do not specify default accessors. In TypeScript, the default accessor for a class attribute is
 `public`, so specifying it for functions and attributes is redundant.
