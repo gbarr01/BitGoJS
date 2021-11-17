@@ -38,9 +38,22 @@ export class KeyPair extends Ed25519KeyPair {
     return this.createPolkadotPair().address;
   }
 
-  /** @inheritdoc */
-  getKeys(): KeyringPair {
+  /**
+   * Getting the KeyringPair for signing a dot transaction.
+   *
+   * @returns {KeyringPair} dot KeyringPair
+   */
+  getSigningKeyPair(): KeyringPair {
     return this.createPolkadotPair();
+  }
+
+  /** @inheritdoc */
+  getKeys(): DefaultKeys {
+    const result: DefaultKeys = { pub: this.keyPair.pub };
+    if (this.keyPair.prv) {
+      result.prv = this.keyPair.prv;
+    }
+    return result;
   }
 
   /** @inheritdoc */

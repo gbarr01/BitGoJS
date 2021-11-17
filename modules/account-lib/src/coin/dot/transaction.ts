@@ -36,14 +36,14 @@ export class Transaction extends BaseTransaction {
     if (!this._dotTransaction) {
       throw new InvalidTransactionError('No transaction data to sign');
     }
-    if (keyPair.getKeys().isLocked) {
+    if (!keyPair.getKeys().prv) {
       throw new SigningError('Missing private key');
     }
     const signingPayload = construct.signingPayload(this._dotTransaction, {
       registry: this._registry,
     });
     // Sign a payload. This operation should be performed on an offline device.
-    const signingKeyPair = keyPair.getKeys();
+    const signingKeyPair = keyPair.getSigningKeyPair();
     const txHex = utils.createSignedTx(signingKeyPair, signingPayload, this._dotTransaction, {
       metadataRpc: this._dotTransaction.metadataRpc,
       registry: this._registry,
