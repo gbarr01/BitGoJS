@@ -2,8 +2,8 @@ import { decodeAddress, encodeAddress, Keyring } from '@polkadot/keyring';
 import { decodePair } from '@polkadot/keyring/pair/decode';
 import { KeyringPair } from '@polkadot/keyring/types';
 import { EXTRINSIC_VERSION } from '@polkadot/types/extrinsic/v4/Extrinsic';
-import { hexToU8a, isHex } from '@polkadot/util';
-import { base64Decode } from '@polkadot/util-crypto';
+import { hexToU8a, isHex, u8aToHex } from '@polkadot/util';
+import { base64Decode, signatureVerify } from '@polkadot/util-crypto';
 
 import { UnsignedTransaction } from '@substrate/txwrapper-core';
 import { TypeRegistry } from '@substrate/txwrapper-core/lib/types';
@@ -17,6 +17,7 @@ import { ProxyCallArgs, TransferArgs } from './iface';
 const polkaUtils = require('@polkadot/util');
 const { createTypeUnsafe } = require('@polkadot/types');
 
+const PROXY_METHOD_ARG = 2;
 export class Utils implements BaseUtils {
   /** @inheritdoc */
   isValidAddress(address: string): boolean {
@@ -48,6 +49,21 @@ export class Utils implements BaseUtils {
     throw new NotImplementedError('method not implemented');
   }
 
+  /**
+   * Verifies the signature on a given message
+   *
+   * @param {string} signedMessage the signed message for the signature
+   * @param {string} signature the signature to verify
+   * @param {string} address the address of the signer
+   * @returns {boolean} whether the signature is valid or not
+   */
+  verifySignature(signedMessage: string, signature: string, address: string): boolean {
+    const publicKey = decodeAddress(address);
+    const hexPublicKey = u8aToHex(publicKey);
+
+    return signatureVerify(signedMessage, signature, hexPublicKey).isValid;
+  }
+
   /** @inheritdoc */
   isValidTransactionId(txId: string): boolean {
     throw new NotImplementedError('method not implemented');
@@ -66,10 +82,23 @@ export class Utils implements BaseUtils {
     };
   }
 
+  /**
+   * Helper function to capitalize the first letter of a string
+   *
+   * @param {string} val
+   * @returns {string}
+   */
   capitalizeFirstLetter(val: string): string {
     return val.charAt(0).toUpperCase() + val.slice(1);
   }
 
+  /**
+   * Helper function to decode the internal method hex incase of a proxy transaction
+   *
+   * @param {string | UnsignedTransaction} tx
+   * @param { metadataRpc: string; registry: TypeRegistry } options
+   * @returns {TransferArgs}
+   */
   decodeCallMethod(
     tx: string | UnsignedTransaction,
     options: { metadataRpc: string; registry: TypeRegistry },
@@ -89,7 +118,8 @@ export class Utils implements BaseUtils {
     } else {
       methodCall = registry.createType('Call', tx.method);
     }
-    const decodedArgs = methodCall.args[2].toJSON() as unknown as ProxyCallArgs;
+    const method = methodCall.args[PROXY_METHOD_ARG];
+    const decodedArgs = method.toJSON() as unknown as ProxyCallArgs;
     return decodedArgs.args;
   }
 

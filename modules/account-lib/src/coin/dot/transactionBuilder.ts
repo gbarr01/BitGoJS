@@ -209,6 +209,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
     this._method = method;
     return this;
   }
+
   /**
    * Sets the
    * specName,
@@ -358,6 +359,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
       },
     };
   }
+
   buildRegistry(): this {
     this._registry = getRegistry({
       chainName: this._chainName,
@@ -367,6 +369,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
     });
     return this;
   }
+
   /**
    * The transaction type.
    */
@@ -383,6 +386,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
       throw new AddressValidationError(address.address);
     }
   }
+
   /** @inheritdoc */
   validateKey({ key }: BaseKey): void {
     let isValidPrivateKeyFromBytes;
@@ -434,6 +438,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
       }
     }
   }
+
   /** @inheritdoc */
   validateTransaction(_: Transaction): void {
     this.validateBaseFields(
@@ -451,6 +456,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
       this._tip,
     );
   }
+
   private validateBaseFields(
     sender: string,
     blockNumber: number,
@@ -484,12 +490,14 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
       throw new InvalidTransactionError(`Transaction validation failed: ${validationResult.error.message}`);
     }
   }
+
   /** @inheritdoc */
   validateValue(value: BigNumber): void {
     if (value.isLessThan(0)) {
       throw new BuildTransactionError('Value cannot be less than zero');
     }
   }
+
   /** @inheritdoc */
   protected signImplementation({ key }: BaseKey): Transaction {
     this._keyPair = new KeyPair({ prv: key });

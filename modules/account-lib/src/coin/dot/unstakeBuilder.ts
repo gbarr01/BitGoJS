@@ -79,7 +79,7 @@ export class UnstakeBuilder extends TransactionBuilder {
       const txMethod = this._method.args as UnstakeArgs;
       this.amount(txMethod.value);
     } else {
-      throw new InvalidTransactionError(`Invalid Transaction Type: ${this._method?.name}. Expected bond`);
+      throw new InvalidTransactionError(`Invalid Transaction Type: ${this._method?.name}. Expected unbond`);
     }
     return tx;
   }

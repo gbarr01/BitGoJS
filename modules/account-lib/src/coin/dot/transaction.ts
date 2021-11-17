@@ -184,6 +184,55 @@ export class Transaction extends BaseTransaction {
     return result;
   }
 
+  /** @inheritdoc */
+  loadInputAndOutput(): void {
+    if (!this._dotTransaction) {
+      return;
+    }
+    const decodedTx = decode(this._dotTransaction, {
+      metadataRpc: this._dotTransaction.metadataRpc,
+      registry: this._registry,
+    }) as unknown as DecodedTx;
+
+    if (this.type === TransactionType.Send) {
+      const txMethod = decodedTx.method.args as any;
+      let to: string;
+      let value: string;
+      if (txMethod.real) {
+        const decodedCall = utils.decodeCallMethod(this._dotTransaction, {
+          metadataRpc: this._dotTransaction.metadataRpc,
+          registry: this._registry,
+        });
+        const keypairDest = new KeyPair({
+          pub: Buffer.from(decodeAddress(decodedCall.dest.id)).toString('hex'),
+        });
+        to = keypairDest.getAddress();
+        value = decodedCall.value;
+      } else {
+        const keypairDest = new KeyPair({
+          pub: Buffer.from(decodeAddress(txMethod.dest.id)).toString('hex'),
+        });
+        to = keypairDest.getAddress();
+        value = txMethod.value;
+      }
+      this._outputs = [
+        {
+          address: to,
+          value,
+          coin: this._coinConfig.name,
+        },
+      ];
+
+      this._inputs = [
+        {
+          address: decodedTx.address,
+          value,
+          coin: this._coinConfig.name,
+        },
+      ];
+    }
+  }
+
   setDotTransaction(tx: UnsignedTransaction): void {
     this._dotTransaction = tx;
   }

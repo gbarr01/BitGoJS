@@ -189,7 +189,9 @@ export class TransferBuilder extends TransactionBuilder {
       : TransferTransactionSchema.validate({ amount, to });
 
     if (validationResult.error) {
-      throw new InvalidTransactionError(`Proxy Transaction validation failed: ${validationResult.error.message}`);
+      throw new InvalidTransactionError(
+        `Proxy/TransferKeepAlive Transaction validation failed: ${validationResult.error.message}`,
+      );
     }
   }
 }

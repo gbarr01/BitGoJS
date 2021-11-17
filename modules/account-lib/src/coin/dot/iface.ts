@@ -161,6 +161,9 @@ export interface validityWindow {
   unit?: 'block' | 'seconds' | 'milliseconds';
 }
 
+/**
+ * Fee options based on the BitgoJS standard doc.
+ */
 export type FeeOptions = {
   amount: number | string;
   unit?: ['baseUnit', 'cpu', 'ram'];
