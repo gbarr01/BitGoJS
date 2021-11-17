@@ -71,7 +71,7 @@ export class StakingBuilder extends TransactionBuilder {
    *
    * @see https://wiki.polkadot.network/docs/learn-staking#accounts
    */
-  controller(controller: string): this {
+  owner(controller: string): this {
     this.validateAddress({ address: controller });
     this._controller = controller;
     return this;
@@ -122,7 +122,7 @@ export class StakingBuilder extends TransactionBuilder {
     if (this._method?.name === MethodNames.Bond) {
       const txMethod = this._method.args as StakeArgs;
       this.amount(txMethod.value);
-      this.controller(txMethod.controller.id);
+      this.owner(txMethod.controller.id);
 
       const payee = txMethod.payee as StakeArgsPayeeRaw;
       if (payee.account) {

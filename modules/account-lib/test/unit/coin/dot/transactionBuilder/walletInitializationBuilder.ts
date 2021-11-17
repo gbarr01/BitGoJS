@@ -47,7 +47,7 @@ describe('Dot Add Proxy Builder', () => {
         .validity({ firstValid: 3933, maxDuration: 64 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .sequenceId({ name: 'Nonce', keyword: 'nonce', value: 200 })
-        .fee({ amount: 0, type: 'tip' })
+        .tip({ amount: 0, type: 'tip' })
         .version(7);
       builder.sign({ key: sender.secretKey });
       const tx = await builder.build();
@@ -77,7 +77,7 @@ describe('Dot Add Proxy Builder', () => {
         .validity({ firstValid: 3933, maxDuration: 64 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .sequenceId({ name: 'Nonce', keyword: 'nonce', value: 200 })
-        .fee({ amount: 0, type: 'tip' })
+        .tip({ amount: 0, type: 'tip' })
         .version(7);
       const tx = await builder.build();
       const txJson = tx.toJson();

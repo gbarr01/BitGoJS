@@ -28,10 +28,10 @@ describe('Dot Stake Builder', () => {
     it('should validate controller address', () => {
       const spy = sinon.spy(builder, 'validateAddress');
       should.throws(
-        () => builder.controller('asd'),
+        () => builder.owner('asd'),
         (e: Error) => e.message === `The address 'asd' is not a well-formed dot address`,
       );
-      should.doesNotThrow(() => builder.controller(sender.address));
+      should.doesNotThrow(() => builder.owner(sender.address));
       assert.calledTwice(spy);
     });
 
@@ -54,13 +54,13 @@ describe('Dot Stake Builder', () => {
       builder
         .testnet()
         .amount('90034235235322')
-        .controller(receiver.address)
+        .owner(receiver.address)
         .payee('Staked')
         .sender({ address: sender.address })
         .validity({ firstValid: 3933, maxDuration: 64 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .sequenceId({ name: 'Nonce', keyword: 'nonce', value: 200 })
-        .fee({ amount: 0, type: 'tip' })
+        .tip({ amount: 0, type: 'tip' })
         .version(7);
       builder.sign({ key: sender.secretKey });
       const tx = await builder.build();
@@ -84,13 +84,13 @@ describe('Dot Stake Builder', () => {
       builder
         .testnet()
         .amount('90034235235322')
-        .controller(receiver.address)
+        .owner(receiver.address)
         .payee('Staked')
         .sender({ address: sender.address })
         .validity({ firstValid: 3933, maxDuration: 64 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .sequenceId({ name: 'Nonce', keyword: 'nonce', value: 200 })
-        .fee({ amount: 0, type: 'tip' })
+        .tip({ amount: 0, type: 'tip' })
         .version(7);
       const tx = await builder.build();
       const txJson = tx.toJson();

@@ -125,10 +125,10 @@ describe('Dot Transfer Builder', () => {
     it('should validate tip', () => {
       const spy = sinon.spy(builder, 'validateValue');
       should.throws(
-        () => builder.fee({ amount: -1, type: 'tip' }),
+        () => builder.tip({ amount: -1, type: 'tip' }),
         (e: Error) => e.message === 'Value cannot be less than zero',
       );
-      should.doesNotThrow(() => builder.fee({ amount: 10, type: 'tip' }));
+      should.doesNotThrow(() => builder.tip({ amount: 10, type: 'tip' }));
       assert.calledTwice(spy);
     });
 
@@ -151,7 +151,7 @@ describe('Dot Transfer Builder', () => {
         .validity({ firstValid: 3933, maxDuration: 64 })
         .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
         .sequenceId({ name: 'Nonce', keyword: 'nonce', value: 200 })
-        .fee({ amount: 0, type: 'tip' })
+        .tip({ amount: 0, type: 'tip' })
         .version(7);
       should.doesNotThrow(() => builder.validateTransaction(builder.getTransaction()));
     });

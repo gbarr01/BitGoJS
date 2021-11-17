@@ -80,10 +80,10 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
    *
    * @see https://wiki.polkadot.network/docs/build-transaction-construction
    */
-  fee(fee: FeeOptions): this {
-    const tip = new BigNumber(fee.amount);
-    this.validateValue(tip);
-    this._tip = tip.toNumber();
+  tip(tip: FeeOptions): this {
+    const tipBN = new BigNumber(tip.amount);
+    this.validateValue(tipBN);
+    this._tip = tipBN.toNumber();
     return this;
   }
 
@@ -320,7 +320,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
       value: decodedTxn.nonce,
     });
     if (decodedTxn.tip) {
-      this.fee({ amount: `${decodedTxn.tip}`, type: 'tip' });
+      this.tip({ amount: `${decodedTxn.tip}`, type: 'tip' });
     }
     this.method(decodedTxn.method as unknown as TxMethod);
     return this._transaction;

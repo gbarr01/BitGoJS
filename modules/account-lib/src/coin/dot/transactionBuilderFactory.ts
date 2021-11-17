@@ -28,7 +28,7 @@ export class TransactionBuilderFactory extends BaseTransactionBuilderFactory {
     return new TransferBuilder(this._coinConfig);
   }
 
-  getStakeBuilder(): StakingBuilder {
+  getStakingBuilder(): StakingBuilder {
     return new StakingBuilder(this._coinConfig);
   }
 
@@ -216,7 +216,7 @@ export class TransactionBuilderFactory extends BaseTransactionBuilderFactory {
     if (methodName === MethodNames.TransferKeepAlive || methodName === MethodNames.Proxy) {
       return this.getTransferBuilder();
     } else if (methodName === MethodNames.Bond) {
-      return this.getStakeBuilder();
+      return this.getStakingBuilder();
     } else if (methodName === MethodNames.AddProxy) {
       return this.getWalletInitializationBuilder();
     } else if (methodName === MethodNames.Unbond) {

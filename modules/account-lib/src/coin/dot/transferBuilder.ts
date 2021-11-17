@@ -16,7 +16,6 @@ export class TransferBuilder extends TransactionBuilder {
   protected _to: string;
   protected _real: string;
   protected _forceProxyType: proxyType;
-  protected _call: string;
 
   constructor(_coinConfig: Readonly<CoinConfig>) {
     super(_coinConfig);
