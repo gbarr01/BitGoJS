@@ -28,10 +28,10 @@ describe('Dot Stake Builder', () => {
     it('should validate controller address', () => {
       const spy = sinon.spy(builder, 'validateAddress');
       should.throws(
-        () => builder.owner('asd'),
+        () => builder.owner({ address: 'asd' }),
         (e: Error) => e.message === `The address 'asd' is not a well-formed dot address`,
       );
-      should.doesNotThrow(() => builder.owner(sender.address));
+      should.doesNotThrow(() => builder.owner({ address: sender.address }));
       assert.calledTwice(spy);
     });
 
@@ -54,7 +54,7 @@ describe('Dot Stake Builder', () => {
       builder
         .testnet()
         .amount('90034235235322')
-        .owner(receiver.address)
+        .owner({ address: receiver.address })
         .payee('Staked')
         .sender({ address: sender.address })
         .validity({ firstValid: 3933, maxDuration: 64 })
@@ -84,7 +84,7 @@ describe('Dot Stake Builder', () => {
       builder
         .testnet()
         .amount('90034235235322')
-        .owner(receiver.address)
+        .owner({ address: receiver.address })
         .payee('Staked')
         .sender({ address: sender.address })
         .validity({ firstValid: 3933, maxDuration: 64 })

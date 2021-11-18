@@ -1,6 +1,5 @@
 import { BaseCoin as CoinConfig } from '@bitgo/statics';
 import { UnsignedTransaction } from '@substrate/txwrapper-core';
-import { decodeAddress } from '@polkadot/keyring';
 import { decode, methods } from '@substrate/txwrapper-polkadot';
 import BigNumber from 'bignumber.js';
 import utils from './utils';
@@ -10,7 +9,7 @@ import { MethodNames, StakeArgs, StakeArgsPayee, StakeArgsPayeeRaw } from './ifa
 import { Transaction } from './transaction';
 import { TransactionBuilder } from './transactionBuilder';
 import { StakeTransactionSchema } from './txnSchema';
-import { KeyPair } from '.';
+import { BaseAddress } from '../baseCoin/iface';
 
 export class StakingBuilder extends TransactionBuilder {
   protected _amount: string;
@@ -71,9 +70,9 @@ export class StakingBuilder extends TransactionBuilder {
    *
    * @see https://wiki.polkadot.network/docs/learn-staking#accounts
    */
-  owner(controller: string): this {
-    this.validateAddress({ address: controller });
-    this._controller = controller;
+  owner(controller: BaseAddress): this {
+    this.validateAddress(controller);
+    this._controller = controller.address;
     return this;
   }
 
@@ -122,14 +121,11 @@ export class StakingBuilder extends TransactionBuilder {
     if (this._method?.name === MethodNames.Bond) {
       const txMethod = this._method.args as StakeArgs;
       this.amount(txMethod.value);
-      this.owner(txMethod.controller.id);
+      this.owner({ address: utils.decodeDotAddress(txMethod.controller.id) });
 
       const payee = txMethod.payee as StakeArgsPayeeRaw;
       if (payee.account) {
-        const keypair = new KeyPair({
-          pub: Buffer.from(decodeAddress(payee.account, false, this._registry.chainSS58)).toString('hex'),
-        });
-        this.payee({ Account: keypair.getAddress() });
+        this.payee({ Account: utils.decodeDotAddress(payee.account) });
       } else {
         const payeeType = utils.capitalizeFirstLetter(Object.keys(payee)[0]) as StakeArgsPayee;
         this.payee(payeeType);

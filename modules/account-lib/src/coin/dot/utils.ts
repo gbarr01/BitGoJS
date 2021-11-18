@@ -160,6 +160,17 @@ export class Utils implements BaseUtils {
     });
     return txHex;
   }
+
+  /**
+   * Decodes the dot address from the given format
+   *
+   * @param address Decodes
+   * @returns {string}
+   */
+  decodeDotAddress(address: string, ss58Format?: number): string {
+    const keypair = new KeyPair({ pub: Buffer.from(decodeAddress(address, undefined, ss58Format)).toString('hex') });
+    return keypair.getAddress();
+  }
 }
 
 const utils = new Utils();

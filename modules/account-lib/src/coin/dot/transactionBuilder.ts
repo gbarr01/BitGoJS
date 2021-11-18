@@ -1,20 +1,19 @@
 import { BaseCoin as CoinConfig, DotNetwork, PolkadotSpecNameType } from '@bitgo/statics';
-import { BaseTransactionBuilder, TransactionType } from '../baseCoin';
-import { InvalidTransactionError, BuildTransactionError } from '../baseCoin/errors';
-import { BaseAddress, BaseKey } from '../baseCoin/iface';
-import { isValidEd25519Seed } from '../../utils/crypto';
-import { testnetMetadataRpc, westendMetadataRpc, mainnetMetadataRpc } from '../../../resources/dot';
-import BigNumber from 'bignumber.js';
-import { decodeAddress } from '@polkadot/keyring';
-import { getRegistry, decode } from '@substrate/txwrapper-polkadot';
 import { UnsignedTransaction } from '@substrate/txwrapper-core';
-import { TypeRegistry, DecodedSignedTx, DecodedSigningPayload } from '@substrate/txwrapper-core/lib/types';
-import { BaseTransactionSchema, SignedTransactionSchema, SigningPayloadTransactionSchema } from './txnSchema';
-import { Transaction } from './transaction';
-import { KeyPair } from './keyPair';
-import { CreateBaseTxInfo, FeeOptions, sequenceId, TxMethod, validityWindow } from './iface';
-import Utils from './utils';
+import { DecodedSignedTx, DecodedSigningPayload, TypeRegistry } from '@substrate/txwrapper-core/lib/types';
+import { decode, getRegistry } from '@substrate/txwrapper-polkadot';
+import BigNumber from 'bignumber.js';
+import { mainnetMetadataRpc, testnetMetadataRpc, westendMetadataRpc } from '../../../resources/dot';
+import { isValidEd25519Seed } from '../../utils/crypto';
+import { BaseTransactionBuilder, TransactionType } from '../baseCoin';
+import { BuildTransactionError, InvalidTransactionError } from '../baseCoin/errors';
+import { BaseAddress, BaseKey } from '../baseCoin/iface';
 import { AddressValidationError } from './errors';
+import { CreateBaseTxInfo, FeeOptions, sequenceId, TxMethod, validityWindow } from './iface';
+import { KeyPair } from './keyPair';
+import { Transaction } from './transaction';
+import { BaseTransactionSchema, SignedTransactionSchema, SigningPayloadTransactionSchema } from './txnSchema';
+import { default as Utils, default as utils } from './utils';
 
 export abstract class TransactionBuilder extends BaseTransactionBuilder {
   protected _transaction: Transaction;
@@ -309,10 +308,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
       this.blockHash(decodedTxn.blockHash);
       this.version(decodedTxn.transactionVersion);
     } else {
-      const keypair = new KeyPair({
-        pub: Buffer.from(decodeAddress(decodedTxn.address)).toString('hex'),
-      });
-      this.sender({ address: keypair.getAddress() });
+      this.sender({ address: utils.decodeDotAddress(decodedTxn.address) });
     }
     this.validity({ maxDuration: decodedTxn.eraPeriod });
     this.sequenceId({

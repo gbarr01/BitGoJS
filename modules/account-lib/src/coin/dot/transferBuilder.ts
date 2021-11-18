@@ -153,10 +153,10 @@ export class TransferBuilder extends TransactionBuilder {
     if (this._method?.name === MethodNames.TransferKeepAlive) {
       const txMethod = this._method.args as TransferArgs;
       this.amount(txMethod.value);
-      this.to({ address: txMethod.dest.id });
+      this.to({ address: utils.decodeDotAddress(txMethod.dest.id) });
     } else if (this._method?.name === MethodNames.Proxy) {
       const txMethod = this._method.args as ProxyArgs;
-      this.real({ address: txMethod.real });
+      this.real({ address: utils.decodeDotAddress(txMethod.real) });
       this.forceProxyType(txMethod.forceProxyType);
       const decodedCall = utils.decodeCallMethod(rawTransaction, {
         registry: this._registry,
@@ -168,7 +168,7 @@ export class TransferBuilder extends TransactionBuilder {
         );
       }
       this.amount(`${decodedCall.value}`);
-      this.to({ address: decodedCall.dest.id });
+      this.to({ address: utils.decodeDotAddress(decodedCall.dest.id) });
     } else {
       throw new InvalidTransactionError(
         `Invalid Transaction Type: ${this._method?.name}. Expected a transferKeepAlive or a proxy transferKeepAlive transaction`,

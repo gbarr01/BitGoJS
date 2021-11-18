@@ -153,6 +153,28 @@ describe('Dot Proxy Builder', () => {
       should.deepEqual(txJson.transactionVersion, 7);
       should.deepEqual(txJson.chainName, 'Polkadot');
     });
+
+    it('should build from raw signed westend tx', async () => {
+      const config = coins.get('tdot');
+      const westendBuilder = new TransferBuilder(config);
+      westendBuilder.westend().from(DotResources.rawTx.transfer.westendSigned);
+      westendBuilder
+        .validity({ firstValid: 3933, maxDuration: 64 })
+        .blockHash('0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d')
+        .version(7);
+      const tx = await westendBuilder.build();
+      const txJson = tx.toJson();
+      should.deepEqual(txJson.amount, '10000000000');
+      should.deepEqual(txJson.to, receiver.address);
+      should.deepEqual(txJson.sender, sender.address);
+      should.deepEqual(txJson.blockNumber, 3933);
+      should.deepEqual(txJson.blockHash, '0x149799bc9602cb5cf201f3425fb8d253b2d4e61fc119dcab3249f307f594754d');
+      should.deepEqual(txJson.genesisHash, '0xe143f23803ac50e8f6f8e62695d1ce9e4e1d68aa36c1cd2cfd15340213f3423e');
+      should.deepEqual(txJson.nonce, 200);
+      should.deepEqual(txJson.tip, 0);
+      should.deepEqual(txJson.transactionVersion, 7);
+      should.deepEqual(txJson.eraPeriod, 64);
+    });
   });
 
   describe('build proxy transfer transaction', () => {
