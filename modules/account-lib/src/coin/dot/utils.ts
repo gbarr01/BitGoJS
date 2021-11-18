@@ -4,7 +4,7 @@ import { KeyringPair } from '@polkadot/keyring/types';
 import { EXTRINSIC_VERSION } from '@polkadot/types/extrinsic/v4/Extrinsic';
 import { hexToU8a, isHex, u8aToHex } from '@polkadot/util';
 import { base64Decode, signatureVerify } from '@polkadot/util-crypto';
-
+import { isValidEd25519PublicKey, isValidEd25519SecretKey } from '../../utils/crypto';
 import { UnsignedTransaction } from '@substrate/txwrapper-core';
 import { TypeRegistry } from '@substrate/txwrapper-core/lib/types';
 import { construct, createMetadata } from '@substrate/txwrapper-polkadot';
@@ -36,12 +36,12 @@ export class Utils implements BaseUtils {
 
   /** @inheritdoc */
   isValidPrivateKey(key: string): boolean {
-    throw new NotImplementedError('method not implemented');
+    return isValidEd25519SecretKey(key);
   }
 
   /** @inheritdoc */
   isValidPublicKey(key: string): boolean {
-    throw new NotImplementedError('method not implemented');
+    return isValidEd25519PublicKey(key);
   }
 
   /** @inheritdoc */
