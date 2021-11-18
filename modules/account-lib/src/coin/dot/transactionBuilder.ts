@@ -336,6 +336,7 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
     if (this._keyPair) {
       this.transaction.sign(this._keyPair);
     }
+    this._transaction.loadInputsAndOutputs();
     return this._transaction;
   }
 
@@ -371,7 +372,8 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
   }
 
   /**
-   * The transaction type.
+   * Builds the specific transaction builder internally
+   * using the @substrate/txwrapper builder.
    */
   protected abstract buildTransaction(): UnsignedTransaction;
 

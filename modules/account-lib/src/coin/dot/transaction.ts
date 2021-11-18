@@ -64,19 +64,6 @@ export class Transaction extends BaseTransaction {
     this._sender = sender;
   }
 
-  /**
-   * Returns the hex representation of the method called by the transaction
-   * Used to supply the original method to the proxy builder
-   *
-   * @returns {string} string
-   */
-  methodHex(): string {
-    if (!this._dotTransaction) {
-      throw new InvalidTransactionError('Empty Transaction');
-    }
-    return this._dotTransaction.method;
-  }
-
   /** @inheritdoc */
   toBroadcastFormat(): string {
     if (!this._dotTransaction) {
@@ -185,7 +172,7 @@ export class Transaction extends BaseTransaction {
   }
 
   /** @inheritdoc */
-  loadInputAndOutput(): void {
+  loadInputsAndOutputs(): void {
     if (!this._dotTransaction) {
       return;
     }
@@ -198,6 +185,7 @@ export class Transaction extends BaseTransaction {
       const txMethod = decodedTx.method.args as any;
       let to: string;
       let value: string;
+      let from: string;
       if (txMethod.real) {
         const decodedCall = utils.decodeCallMethod(this._dotTransaction, {
           metadataRpc: this._dotTransaction.metadataRpc,
@@ -206,14 +194,19 @@ export class Transaction extends BaseTransaction {
         const keypairDest = new KeyPair({
           pub: Buffer.from(decodeAddress(decodedCall.dest.id)).toString('hex'),
         });
+        const keypairFrom = new KeyPair({
+          pub: Buffer.from(decodeAddress(txMethod.real)).toString('hex'),
+        });
         to = keypairDest.getAddress();
-        value = decodedCall.value;
+        value = `${decodedCall.value}`;
+        from = keypairFrom.getAddress(txMethod.real);
       } else {
         const keypairDest = new KeyPair({
           pub: Buffer.from(decodeAddress(txMethod.dest.id)).toString('hex'),
         });
         to = keypairDest.getAddress();
         value = txMethod.value;
+        from = decodedTx.address;
       }
       this._outputs = [
         {
@@ -225,7 +218,7 @@ export class Transaction extends BaseTransaction {
 
       this._inputs = [
         {
-          address: decodedTx.address,
+          address: from,
           value,
           coin: this._coinConfig.name,
         },

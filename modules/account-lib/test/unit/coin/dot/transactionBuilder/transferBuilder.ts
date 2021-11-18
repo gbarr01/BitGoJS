@@ -72,6 +72,14 @@ describe('Dot Proxy Builder', () => {
       should.deepEqual(txJson.transactionVersion, 7);
       should.deepEqual(txJson.chainName, 'Polkadot');
       should.deepEqual(txJson.eraPeriod, 64);
+
+      const inputs = tx.inputs[0];
+      should.deepEqual(inputs.address, sender.address);
+      should.deepEqual(inputs.value, '90034235235322');
+
+      const outputs = tx.outputs[0];
+      should.deepEqual(outputs.address, receiver.address);
+      should.deepEqual(outputs.value, '90034235235322');
     });
 
     it('should build an unsigned transfer transaction', async () => {
@@ -177,6 +185,14 @@ describe('Dot Proxy Builder', () => {
       should.deepEqual(txJson.transactionVersion, 7);
       should.deepEqual(txJson.chainName, 'Polkadot');
       should.deepEqual(txJson.eraPeriod, 64);
+
+      const inputs = tx.inputs[0];
+      should.deepEqual(inputs.address, sender.address);
+      should.deepEqual(inputs.value, '90034235235322');
+
+      const outputs = tx.outputs[0];
+      should.deepEqual(outputs.address, receiver.address);
+      should.deepEqual(outputs.value, '90034235235322');
     });
 
     it('should build an unsigned proxy transaction', async () => {

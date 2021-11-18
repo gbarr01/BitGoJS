@@ -12,7 +12,7 @@ import base32 from 'hi-base32';
 import { KeyPair } from '.';
 import { BaseUtils } from '../baseCoin';
 import { NotImplementedError } from '../baseCoin/errors';
-import { DefaultKeys, Seed } from '../baseCoin/iface';
+import { Seed } from '../baseCoin/iface';
 import { ProxyCallArgs, TransferArgs } from './iface';
 const polkaUtils = require('@polkadot/util');
 const { createTypeUnsafe } = require('@polkadot/types');
@@ -159,25 +159,6 @@ export class Utils implements BaseUtils {
       registry,
     });
     return txHex;
-  }
-
-  /**
-   * Returns the decoded keypair from a Dot keyring pair
-   *
-   * @param {KeyringPair} keyringPair
-   * @returns {DefaultKeys} default key format
-   */
-  decodeDotKeyringPair(keyringPair: KeyringPair): DefaultKeys {
-    if (keyringPair.isLocked) {
-      return {
-        pub: Buffer.from(keyringPair.publicKey).toString('hex'),
-      };
-    }
-    const keyPair = decodePair('', base64Decode(keyringPair.toJson().encoded), keyringPair.toJson().encoding.type);
-    return {
-      prv: Buffer.from(keyPair.secretKey).toString('hex').slice(0, 64),
-      pub: Buffer.from(keyPair.publicKey).toString('hex'),
-    };
   }
 }
 
