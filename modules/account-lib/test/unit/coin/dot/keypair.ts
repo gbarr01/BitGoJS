@@ -40,6 +40,11 @@ describe('Dot KeyPair', () => {
       should.throws(() => new Dot.KeyPair(seed), 'bad seed size');
     });
 
+    it('should create from a valid seed', () => {
+      const seed = { seed: Buffer.alloc(32) }; //  Seed should be 512 bits (64 bytes)
+      should.doesNotThrow(() => new Dot.KeyPair(seed));
+    });
+
     it('should fail to create from an invalid public key', () => {
       const source = {
         pub: '01D63D',

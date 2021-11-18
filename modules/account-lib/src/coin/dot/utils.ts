@@ -171,6 +171,16 @@ export class Utils implements BaseUtils {
     const keypair = new KeyPair({ pub: Buffer.from(decodeAddress(address, undefined, ss58Format)).toString('hex') });
     return keypair.getAddress();
   }
+
+  /**
+   * Decodes the dot address from the given format
+   *
+   * @param address Decodes
+   * @returns {string}
+   */
+  encodeDotAddress(address: string, ss58Format?: number): string {
+    return encodeAddress(address, ss58Format);
+  }
 }
 
 const utils = new Utils();
