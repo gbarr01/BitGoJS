@@ -3,7 +3,7 @@ import { UnsignedTransaction } from '@substrate/txwrapper-core';
 import { DecodedSignedTx, DecodedSigningPayload, TypeRegistry } from '@substrate/txwrapper-core/lib/types';
 import { decode, getRegistry } from '@substrate/txwrapper-polkadot';
 import BigNumber from 'bignumber.js';
-import { mainnetMetadataRpc, testnetMetadataRpc, westendMetadataRpc } from '../../../resources/dot';
+import { mainnetMetadataRpc, westendMetadataRpc } from '../../../resources/dot';
 import { isValidEd25519Seed } from '../../utils/crypto';
 import { BaseTransactionBuilder, TransactionType } from '../baseCoin';
 import { BuildTransactionError, InvalidTransactionError } from '../baseCoin/errors';
@@ -206,30 +206,6 @@ export abstract class TransactionBuilder extends BaseTransactionBuilder {
 
   private method(method: TxMethod): this {
     this._method = method;
-    return this;
-  }
-
-  /**
-   * Sets the
-   * specName,
-   * genesisHash - genesisHash of the chain,
-   * metadataRpc - The SCALE-encoded metadata for the runtime when submitted,
-   * specVersion - The current spec version for the runtime,
-   * chainName - chainName,
-   * registry,
-   * of the testnet
-   *
-   * @returns {TransactionBuilder} This transaction builder.
-   *
-   * @see https://wiki.polkadot.network/docs/build-transaction-construction
-   */
-  testnet(): this {
-    this.specName('polkadot');
-    this.genesisHash('0x2b8d4fdbb41f4bc15b8a7ec8ed0687f2a1ae11e0fc2dc6604fa962a9421ae349');
-    this.metadataRpc(testnetMetadataRpc);
-    this.specVersion(9100);
-    this.chainName('Polkadot');
-    this.buildRegistry();
     return this;
   }
 

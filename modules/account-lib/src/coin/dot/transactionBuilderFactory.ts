@@ -7,7 +7,7 @@ import { TransactionBuilder } from './transactionBuilder';
 import { TransferBuilder } from './transferBuilder';
 import { WalletInitializationBuilder } from './walletInitializationBuilder';
 import { StakingBuilder } from './stakingBuilder';
-import { mainnetMetadataRpc, testnetMetadataRpc, westendMetadataRpc } from '../../../resources/dot';
+import { mainnetMetadataRpc, westendMetadataRpc } from '../../../resources/dot';
 import { MethodNames } from './iface';
 import { UnstakeBuilder } from '.';
 
@@ -129,30 +129,6 @@ export class TransactionBuilderFactory extends BaseTransactionBuilderFactory {
    */
   chainName(chainName: string): this {
     this._chainName = chainName;
-    return this;
-  }
-
-  /**
-   * Sets the
-   * specName,
-   * genesisHash - genesisHash of the chain,
-   * metadataRpc - The SCALE-encoded metadata for the runtime when submitted,
-   * specVersion - The current spec version for the runtime,
-   * chainName - chainName,
-   * registry,
-   * of the testnet
-   *
-   * @returns {TransactionBuilder} This transaction builder.
-   *
-   * @see https://wiki.polkadot.network/docs/build-transaction-construction
-   */
-  testnet(): this {
-    this.specName('polkadot');
-    this.metadataRpc(testnetMetadataRpc);
-    this.specVersion(9100);
-    this.chainName('Polkadot');
-    this.genesisHash('0x2b8d4fdbb41f4bc15b8a7ec8ed0687f2a1ae11e0fc2dc6604fa962a9421ae349');
-    this.buildRegistry();
     return this;
   }
 

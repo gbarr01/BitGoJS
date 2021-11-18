@@ -4,8 +4,27 @@ import sinon, { assert } from 'sinon';
 import { TransferBuilder } from '../../../../../src/coin/dot';
 import * as DotResources from '../../../../resources/dot';
 
-describe('Dot Proxy Builder', () => {
-  let builder: TransferBuilder;
+class StubTransferBuilder extends TransferBuilder {
+  /**
+   * Sets the testnet for test transactions
+   *
+   * @returns {TransactionBuilder} This transaction builder.
+   *
+   * @see https://wiki.polkadot.network/docs/build-transaction-construction
+   */
+  testnet(): this {
+    this.specName('polkadot');
+    this.genesisHash('0x2b8d4fdbb41f4bc15b8a7ec8ed0687f2a1ae11e0fc2dc6604fa962a9421ae349');
+    this.metadataRpc(DotResources.testnetMetadataRpc);
+    this.specVersion(9100);
+    this.chainName('Polkadot');
+    this.buildRegistry();
+    return this;
+  }
+}
+
+describe('Dot Transfer Builder', () => {
+  let builder: StubTransferBuilder;
 
   const proxySender = DotResources.accounts.account3;
   const sender = DotResources.accounts.account1;
@@ -13,7 +32,7 @@ describe('Dot Proxy Builder', () => {
 
   beforeEach(() => {
     const config = coins.get('dot');
-    builder = new TransferBuilder(config);
+    builder = new StubTransferBuilder(config);
   });
   describe('setter validation', () => {
     it('should validate real address', () => {

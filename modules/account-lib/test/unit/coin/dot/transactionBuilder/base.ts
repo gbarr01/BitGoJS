@@ -17,6 +17,23 @@ class StubTransactionBuilder extends TransactionBuilder {
     super(coinConfig);
   }
 
+  /**
+   * Sets the testnet for test transactions
+   *
+   * @returns {TransactionBuilder} This transaction builder.
+   *
+   * @see https://wiki.polkadot.network/docs/build-transaction-construction
+   */
+  testnet(): this {
+    this.specName('polkadot');
+    this.genesisHash('0x2b8d4fdbb41f4bc15b8a7ec8ed0687f2a1ae11e0fc2dc6604fa962a9421ae349');
+    this.metadataRpc(DotResources.testnetMetadataRpc);
+    this.specVersion(9100);
+    this.chainName('Polkadot');
+    this.buildRegistry();
+    return this;
+  }
+
   getSender(): string {
     return this._sender;
   }

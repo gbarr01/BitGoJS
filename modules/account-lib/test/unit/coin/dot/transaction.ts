@@ -3,6 +3,25 @@ import { coins } from '@bitgo/statics';
 import * as DotResources from '../../../resources/dot';
 import { KeyPair, Transaction, TransferBuilder } from '../../../../src/coin/dot';
 
+class StubTransferBuilder extends TransferBuilder {
+  /**
+   * Sets the testnet for test transactions
+   *
+   * @returns {TransactionBuilder} This transaction builder.
+   *
+   * @see https://wiki.polkadot.network/docs/build-transaction-construction
+   */
+  testnet(): this {
+    this.specName('polkadot');
+    this.genesisHash('0x2b8d4fdbb41f4bc15b8a7ec8ed0687f2a1ae11e0fc2dc6604fa962a9421ae349');
+    this.metadataRpc(DotResources.testnetMetadataRpc);
+    this.specVersion(9100);
+    this.chainName('Polkadot');
+    this.buildRegistry();
+    return this;
+  }
+}
+
 describe('Dot Transaction', () => {
   let tx: Transaction;
 
@@ -40,7 +59,7 @@ describe('Dot Transaction', () => {
 
   describe('should build from raw unsigned tx', async () => {
     it('Transaction size validation', async () => {
-      const builder = new TransferBuilder(coins.get('dot'));
+      const builder = new StubTransferBuilder(coins.get('dot'));
       builder.testnet().from(DotResources.rawTx.transfer.unsigned);
       builder
         .testnet()

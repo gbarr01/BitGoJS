@@ -9,8 +9,27 @@ import {
 } from '../../../../../src/coin/dot';
 import * as dotResources from '../../../../resources/dot';
 
+class StubTransactionBuilderFactory extends TransactionBuilderFactory {
+  /**
+   * Sets the testnet for test transactions
+   *
+   * @returns {TransactionBuilder} This transaction builder.
+   *
+   * @see https://wiki.polkadot.network/docs/build-transaction-construction
+   */
+  testnet(): this {
+    this.specName('polkadot');
+    this.metadataRpc(dotResources.testnetMetadataRpc);
+    this.specVersion(9100);
+    this.chainName('Polkadot');
+    this.genesisHash('0x2b8d4fdbb41f4bc15b8a7ec8ed0687f2a1ae11e0fc2dc6604fa962a9421ae349');
+    this.buildRegistry();
+    return this;
+  }
+}
+
 describe('dot Transaction Builder Factory', () => {
-  const factory = register('dot', TransactionBuilderFactory);
+  const factory = register('dot', StubTransactionBuilderFactory);
   factory.testnet();
   const { rawTx } = dotResources;
   const sender = dotResources.accounts.account1;

@@ -1,3 +1,5 @@
+export { testnetMetadataRpc } from './testnet';
+
 export const accounts = {
   account1: {
     secretKey: '874578010603af8e93b44bfc1d13b32830d0dbca6c89f28ccdc662afd3cdc824',
