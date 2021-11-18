@@ -47,7 +47,7 @@ export class WalletInitializationBuilder extends TransactionBuilder {
    * The account to delegate auth to.
    *
    * @param {BaseAddress} owner
-   * @returns {AddProxyBuilder} This builder.
+   * @returns {WalletInitializationBuilder} This builder.
    *
    * @see https://wiki.polkadot.network/docs/learn-proxies#why-use-a-proxy
    */
@@ -61,7 +61,7 @@ export class WalletInitializationBuilder extends TransactionBuilder {
    * The proxy type to add.
    *
    * @param {proxyType} proxyType
-   * @returns {AddProxyBuilder} This builder.
+   * @returns {WalletInitializationBuilder} This builder.
    *
    * @see https://wiki.polkadot.network/docs/learn-proxies#proxy-types
    */
@@ -76,7 +76,7 @@ export class WalletInitializationBuilder extends TransactionBuilder {
    * If zero, then no announcement is needed.
    *
    * @param {string} delay
-   * @returns {AddProxyBuilder} This transfer builder.
+   * @returns {WalletInitializationBuilder} This transfer builder.
    *
    * @see https://wiki.polkadot.network/docs/learn-proxies#time-delayed-proxies
    */
@@ -114,7 +114,9 @@ export class WalletInitializationBuilder extends TransactionBuilder {
       this.type(txMethod.proxyType);
       this.delay(new BigNumber(txMethod.delay).toString());
     } else {
-      throw new InvalidTransactionError(`Invalid Transaction Type: ${this._method?.name}. Expected addProxy`);
+      throw new InvalidTransactionError(
+        `Invalid Transaction Type: ${this._method?.name}. Expected Wallet initialization`,
+      );
     }
     return tx;
   }
@@ -133,7 +135,9 @@ export class WalletInitializationBuilder extends TransactionBuilder {
     });
 
     if (validationResult.error) {
-      throw new InvalidTransactionError(`AddProxy Transaction validation failed: ${validationResult.error.message}`);
+      throw new InvalidTransactionError(
+        `WalletInitialization Transaction validation failed: ${validationResult.error.message}`,
+      );
     }
   }
 }
